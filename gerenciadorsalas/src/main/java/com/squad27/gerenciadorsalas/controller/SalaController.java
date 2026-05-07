@@ -1,54 +1,61 @@
 package com.squad27.gerenciadorsalas.controller;
 
-import com.squad27.gerenciadorsalas.domain.Role;
 import com.squad27.gerenciadorsalas.domain.Sala;
-import com.squad27.gerenciadorsalas.domain.Usuario;
 import com.squad27.gerenciadorsalas.dto.SalaDTO;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import java.util.List;
-import java.util.ArrayList;
+import com.squad27.gerenciadorsalas.service.SalaService;
+import com.squad27.gerenciadorsalas.service.UsuarioService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/salas")
+@RequiredArgsConstructor
+
 
 public class SalaController {
 
-
-    // isso aq é so pra simular um "banco de  dados" ja que n temos ainda.
-    private List<Sala> salas = new ArrayList<>();
+    private final SalaService salaService;
+    private final UsuarioService usuarioService;
 
     @PostMapping
-    public String cadastrarSala(@RequestBody SalaDTO salaDTO){
+    public ResponseEntity<Void> cadastrarSala (@RequestBody SalaDTO salaDTO){
 
-        // uma simulação de usuário logado  como admin
-        Usuario usuario = new Usuario();
-        usuario.setRole(Role.ADMIN);
+        Sala sala = Sala.builder()
+                .numerosala(salaDTO.numerosala())
+                .capacidade(salaDTO.capacidade())
+                .build();
 
+        salaService.cadastrarSala(sala);
+        return ResponseEntity.ok().build();
 
-        if (usuario.getRole() != Role.ADMIN){
-            return "Apenas administradores podem cadastrar salas";
-        }
+    }
 
-        if (salaDTO.nome()  ==  null || salaDTO.nome().isEmpty() || salaDTO.capacidade() <=0){
-            return "Preencha todos os campos obrigatórios";
-        }
+    @GetMapping
+    public ResponseEntity<Sala> buscarSalaPorNumero (@RequestParam String numerosala){
 
-        for (Sala s : salas){
-            if (s.getNome().equalsIgnoreCase(salaDTO.nome())){
-                return "Já existe uma sala com este nome";
-            }
-        }
+        return ResponseEntity.ok(salaService.buscarSalaPorNumero(numerosala));
+    }
 
-        Sala sala =  new Sala();
-        sala.setNome(salaDTO.nome());
-        sala.setCapacidade(salaDTO.capacidade());
+    @DeleteMapping
+    public ResponseEntity<Void>  deletarSalaPorNumero (@RequestParam String numerosala){
 
-        salas.add(sala);
+        salaService.deletarSalaPorNumero(numerosala);
+        return ResponseEntity.ok().build();
+    }
 
-        return "Sala cadastrada com sucesso";
+    @PutMapping
+    public ResponseEntity<Void> atualizarSala (@RequestParam Integer id , @RequestBody SalaDTO salaDTO){
+
+        Sala sala = Sala.builder()
+                .numerosala(salaDTO.numerosala())
+                .capacidade(salaDTO.capacidade())
+                .build();
+
+        salaService.atualizarSalaPorId(id , sala);
+
+        return ResponseEntity.ok().build();
     }
 
 
