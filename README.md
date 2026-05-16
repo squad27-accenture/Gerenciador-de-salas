@@ -205,6 +205,45 @@ As funcionalidades abaixo fazem parte do escopo do projeto e serão implementada
 
 ---
 
-## 👥 Time
-
-Desenvolvido pelo **Squad 27** — Accenture.
+👥 Time
+Desenvolvido pelo Squad 27 — Accenture.
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/bernas0610">
+        <img src="https://github.com/bernas0610.png" width="80px" style="border-radius: 50%"/><br/>
+        <sub><b>Bernardo</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/eujotag">
+        <img src="https://github.com/eujotag.png" width="80px" style="border-radius: 50%"/><br/>
+        <sub><b>João Guilherme</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/andersonsanto09">
+        <img src="https://github.com/andersonsanto09.png" width="80px" style="border-radius: 50%"/><br/>
+        <sub><b>Anderson</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/GabryelPaivaDev">
+        <img src="https://github.com/GabryelPaivaDev.png" width="80px" style="border-radius: 50%"/><br/>
+        <sub><b>Gabryel</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/gustavouus">
+        <img src="https://github.com/gustavouus.png" width="80px" style="border-radius: 50%"/><br/>
+        <sub><b>Luiz Gustavo</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/PauloCesar-12">
+        <img src="https://github.com/PauloCesar-12.png" width="80px" style="border-radius: 50%"/><br/>
+        <sub><b>Paulo</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
