@@ -140,7 +140,7 @@ A API utiliza autenticação via **JWT (Bearer Token)**. Para acessar os endpoin
 
 ## 🗄️ Banco de Dados
 
-O projeto utiliza **Flyway** para controle de migrations. As migrations ficam em `src/main/resources/db/migration/`.
+O projeto utiliza **PostgreSQL** como banco de dados e **Flyway** para controle de migrations. As migrations ficam em `src/main/resources/db/migration/`.
 
 ### Tabela `usuarios`
 | Campo | Tipo | Restrição |
