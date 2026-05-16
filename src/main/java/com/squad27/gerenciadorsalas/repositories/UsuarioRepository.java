@@ -1,11 +1,11 @@
 package com.squad27.gerenciadorsalas.repositories;
 
-import com.squad27.gerenciadorsalas.domain.Usuarios;
+import com.squad27.gerenciadorsalas.domain.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UsuarioRepository extends JpaRepository<Usuarios, Integer>{
+public interface UsuarioRepository extends JpaRepository<Usuario, Integer>{
 
-    Usuarios findByEmail(String email);
+    Usuario findByEmail(String email);
 
     boolean existsByEmail(String email);
 }

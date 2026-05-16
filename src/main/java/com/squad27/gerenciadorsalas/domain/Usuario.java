@@ -2,7 +2,6 @@ package com.squad27.gerenciadorsalas.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,7 +16,8 @@ import java.util.List;
 @Table(name = "usuarios")
 @Entity
 @EqualsAndHashCode(of = "id")
-public class Usuarios implements UserDetails {
+@Builder
+public class Usuario implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -27,7 +27,7 @@ public class Usuarios implements UserDetails {
     private Role role;
     private String username;
 
-    public Usuarios(String email, String senha, Role role, String username){
+    public Usuario(String email, String senha, Role role, String username){
         this.email = email;
         this.senha = senha;
         this.role = role;

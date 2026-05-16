@@ -1,6 +1,6 @@
 package com.squad27.gerenciadorsalas.services;
 
-import com.squad27.gerenciadorsalas.domain.Usuarios;
+import com.squad27.gerenciadorsalas.domain.Usuario;
 import com.squad27.gerenciadorsalas.dto.RegisterDTO;
 import com.squad27.gerenciadorsalas.repositories.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +23,14 @@ public class AuthorizationService implements UserDetailsService {
         return Repository.findByEmail(email);
     }
 
-    public Usuarios cadastro(RegisterDTO registerDTO){
+    public Usuario cadastro(RegisterDTO registerDTO){
         if(Repository.existsByEmail(registerDTO.email()))
         {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Uma conta com esse email ja foi criado!");
         }
 
         String senhaEncriptada = new BCryptPasswordEncoder().encode(registerDTO.senha());
-        Usuarios novousuario = new Usuarios(registerDTO.email(), senhaEncriptada, registerDTO.role(), registerDTO.username());
+        Usuario novousuario = new Usuario(registerDTO.email(), senhaEncriptada, registerDTO.role(), registerDTO.username());
 
         return Repository.save(novousuario);
 

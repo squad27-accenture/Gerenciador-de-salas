@@ -1,7 +1,7 @@
 package com.squad27.gerenciadorsalas.controller;
 
 import com.squad27.gerenciadorsalas.services.AuthorizationService;
-import com.squad27.gerenciadorsalas.domain.Usuarios;
+import com.squad27.gerenciadorsalas.domain.Usuario;
 import com.squad27.gerenciadorsalas.dto.AuthorizationDTO;
 import com.squad27.gerenciadorsalas.dto.LoginResponse;
 import com.squad27.gerenciadorsalas.dto.RegisterDTO;
@@ -32,7 +32,7 @@ public class AuthController {
         try {
             var usernamePassword = new UsernamePasswordAuthenticationToken(data.email(), data.senha());
             var auth = this.authenticationManager.authenticate(usernamePassword);
-            var token = tokenService.generateToken((Usuarios) auth.getPrincipal());
+            var token = tokenService.generateToken((Usuario) auth.getPrincipal());
 
             return ResponseEntity.ok(new LoginResponse(token));
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
@@ -45,8 +45,8 @@ public class AuthController {
     }
 
     @PostMapping("/cadastro")
-    public ResponseEntity<Usuarios> cadastro(@RequestBody RegisterDTO registerDTO){
-       Usuarios newusuario = authorizationService.cadastro(registerDTO);
+    public ResponseEntity<Usuario> cadastro(@RequestBody RegisterDTO registerDTO){
+       Usuario newusuario = authorizationService.cadastro(registerDTO);
        return ResponseEntity.ok().build();
     }
 }

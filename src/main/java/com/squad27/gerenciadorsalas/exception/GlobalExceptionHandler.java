@@ -29,4 +29,9 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(400).body(Map.of("erro", mensagem));
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
+        return ResponseEntity.status(404).body(Map.of("erro", ex.getMessage()));
+    }
 }

@@ -1,10 +1,7 @@
 package com.squad27.gerenciadorsalas.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
@@ -12,12 +9,13 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity(name = "salas")
 @Table(name = "salas")
-public class Salas{
+@Builder
+public class Sala {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private  String nome;
-    private int capacidade;
+    private Integer capacidade;
     @Enumerated(EnumType.STRING)
     private StatusSala status;
     private String local;

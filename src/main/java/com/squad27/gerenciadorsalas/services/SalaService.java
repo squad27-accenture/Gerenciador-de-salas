@@ -1,7 +1,7 @@
 package com.squad27.gerenciadorsalas.services;
 
-import com.squad27.gerenciadorsalas.domain.Salas;
-import com.squad27.gerenciadorsalas.dto.SalasDTO;
+import com.squad27.gerenciadorsalas.domain.Sala;
+import com.squad27.gerenciadorsalas.dto.SalaDTO;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,13 +11,13 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
-public class SalasService {
+public class SalaService {
 
     @Autowired
     private SalaRepository repository;
 
-    public Salas cadastrarsala(SalasDTO salaDTO){
-        Salas sala = new Salas();
+    public Sala cadastrarsala(SalaDTO salaDTO){
+        Sala sala = new Sala();
 
         if (salaDTO.nome()  ==  null || salaDTO.nome().isEmpty()){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -44,8 +44,32 @@ public class SalasService {
         return repository.save(sala);
     }
 
-    public List<Salas> listarsalas(){
+    public List<Sala> listarsalas(){
 
         return repository.findAll();
     }
+
+    public void deletarSalaPorId(Integer id){
+
+        repository.deleteById(id);
+
+    }
+
+    public void atualizarSalaPorId (Integer id , Sala sala){
+
+        Sala salaEntity = repository.findById(id).orElseThrow(
+                ()-> new RuntimeException("Id nao encontrado!")
+        );
+
+        Sala salaAtualizado = Sala.builder()
+                .nome(sala.getNome() != null ? sala.getNome() : salaEntity.getNome())
+                .capacidade(sala.getCapacidade() != null ? sala.getCapacidade() : salaEntity.getCapacidade())
+                .status(sala.getStatus() != null ? sala.getStatus() : salaEntity.getStatus())
+                .id(salaEntity.getId())
+                .local(sala.getLocal() != null ? sala.getLocal() : salaEntity.getLocal())
+                .build();
+
+        repository.saveAndFlush(salaAtualizado);
+    }
+
 }

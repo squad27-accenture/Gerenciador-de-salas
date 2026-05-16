@@ -2,7 +2,7 @@ package com.squad27.gerenciadorsalas.dto;
 
 import com.squad27.gerenciadorsalas.domain.StatusSala;
 
-public record SalasDTO(String nome , int capacidade, StatusSala statusSala, String local)
+public record SalaDTO(String nome , Integer capacidade, StatusSala statusSala, String local)
 {
 
 }
