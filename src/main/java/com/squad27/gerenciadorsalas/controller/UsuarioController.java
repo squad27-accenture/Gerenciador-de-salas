@@ -13,12 +13,12 @@ import java.util.List;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/usuarios")
+@RequestMapping("/usuarios/")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
-    @GetMapping
+    @GetMapping("listarUsuarios")
     public ResponseEntity<List<Usuario>> listarUsuarios(){
 
         var usuarios = usuarioService.listarUsuarios();
@@ -26,7 +26,7 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
-    @DeleteMapping
+    @DeleteMapping("DeletarUsuario")
     public ResponseEntity<String> deletarUsuarioPorId(@RequestParam Integer id){
 
         usuarioService.deletarUsuarioPorId(id);
@@ -34,7 +34,7 @@ public class UsuarioController {
         return ResponseEntity.ok("USUARIO DELETADO!");
     }
 
-    @PutMapping
+    @PutMapping("atualizarConta")
     public ResponseEntity<String> atualizarUsuarioPorId(@RequestParam Integer id , @RequestBody UsuarioDTO usuarioDTO){
 
         Usuario usuario = Usuario.builder()

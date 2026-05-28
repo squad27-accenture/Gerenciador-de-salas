@@ -10,17 +10,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/salas")
+@RequestMapping("/salas/")
 
 public class SalaController {
 
     @Autowired
     SalaService salaService;
 
-    @PostMapping
+    @PostMapping("CadastrarSala")
     public ResponseEntity<Sala> cadastrarSala(@RequestBody SalaDTO salaDTO){
-
-
 
         Sala salaSalva = salaService.cadastrarsala(salaDTO);
         return ResponseEntity.ok(salaSalva);
@@ -28,14 +26,14 @@ public class SalaController {
 
     }
 
-    @GetMapping
+    @GetMapping("ListarSala")
     public List<Sala> listarSalas(){
         return salaService.listarsalas();
     }
 
 
 
-    @DeleteMapping
+    @DeleteMapping("DeletarSala")
     public ResponseEntity<String> deletarSalaPorId(@RequestParam Integer id){
 
         salaService.deletarSalaPorId(id);
@@ -43,7 +41,7 @@ public class SalaController {
         return ResponseEntity.ok("Sala deletada com SUCESSO!");
     }
 
-    @PutMapping
+    @PutMapping("AtualizarSala")
     public ResponseEntity<String> atualizarSalaPorId(@RequestParam Integer id , @RequestBody SalaDTO salaDTO){
 
         Sala sala = Sala.builder()

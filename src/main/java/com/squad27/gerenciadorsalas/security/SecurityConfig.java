@@ -60,6 +60,11 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(authorizate -> authorizate
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/cadastro").permitAll()
                         .requestMatchers(HttpMethod.POST, "/salas").hasRole("ADMIN")

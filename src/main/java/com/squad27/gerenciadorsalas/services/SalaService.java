@@ -1,7 +1,9 @@
 package com.squad27.gerenciadorsalas.services;
 
+import com.squad27.gerenciadorsalas.domain.Assento;
 import com.squad27.gerenciadorsalas.domain.Sala;
 import com.squad27.gerenciadorsalas.dto.SalaDTO;
+import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,11 +38,21 @@ public class SalaService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "O status da sala é obrigatorio");
         }
+        if (salaDTO.capacidade() > 0){
+            for(int c = 1; c <= salaDTO.capacidade(); c++){
+                Assento assento = new Assento();
+                assento.setPosicao(c);
 
+                sala.adicionarasseto(assento);
+            }
+        }
         sala.setNome(salaDTO.nome());
         sala.setCapacidade(salaDTO.capacidade());
         sala.setStatus(salaDTO.statusSala());
         sala.setLocal(salaDTO.local());
+        sala.setCidade(salaDTO.cidade());
+        sala.setEstado(salaDTO.estado());
+        sala.setEquipamentosSala(salaDTO.equipamentosSala());
         return repository.save(sala);
     }
 
