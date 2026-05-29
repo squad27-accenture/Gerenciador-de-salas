@@ -2,6 +2,7 @@ package com.squad27.gerenciadorsalas.services;
 
 import com.squad27.gerenciadorsalas.domain.Assento;
 import com.squad27.gerenciadorsalas.domain.Sala;
+import com.squad27.gerenciadorsalas.dto.AssentoReponseDTO;
 import com.squad27.gerenciadorsalas.dto.SalaDTO;
 import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
@@ -18,13 +19,24 @@ public class SalaService {
     @Autowired
     private SalaRepository repository;
 
+    @Autowired
+    private AssentoRepository assentoRepository;
+
     public Sala cadastrarsala(SalaDTO salaDTO){
         Sala sala = new Sala();
+        String nome = salaDTO.nome().trim();
+
+        if (repository.existsByNomeIgnoreCase(nome)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Já existe uma sala com esse nome."
+            );
+        }
 
         if (salaDTO.nome()  ==  null || salaDTO.nome().isEmpty()){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "O nome da sala é obrigatorio.");
-        }
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "O nome da sala é obrigatorio.");
+            }
         if (salaDTO.capacidade() <=0){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "A capacidade da sala deve ser maior que 0.");
@@ -46,7 +58,7 @@ public class SalaService {
                 sala.adicionarasseto(assento);
             }
         }
-        sala.setNome(salaDTO.nome());
+        sala.setNome(nome);
         sala.setCapacidade(salaDTO.capacidade());
         sala.setStatus(salaDTO.statusSala());
         sala.setLocal(salaDTO.local());
@@ -67,6 +79,11 @@ public class SalaService {
 
     }
 
+    public void deletarSalaPorNome(String nome){
+
+        repository.deleteByNome(nome);
+    }
+
     public void atualizarSalaPorId (Integer id , Sala sala){
 
         Sala salaEntity = repository.findById(id).orElseThrow(
@@ -84,4 +101,14 @@ public class SalaService {
         repository.saveAndFlush(salaAtualizado);
     }
 
+    public List<AssentoReponseDTO> listarAssentosDaSala(Integer salaId) {
+        return assentoRepository.findBySalaIdOrderByPosicao(salaId)
+                .stream()
+                .map(assento -> new AssentoReponseDTO(
+                        assento.getId(),
+                        assento.getPosicao(),
+                        assento.getEquipamentoAssento() == null ? null : assento.getEquipamentoAssento().name()
+                ))
+                .toList();
+    }
 }

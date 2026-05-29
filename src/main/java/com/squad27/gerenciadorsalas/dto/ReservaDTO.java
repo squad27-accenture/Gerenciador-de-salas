@@ -10,7 +10,6 @@ public record ReservaDTO (LocalTime horarioInicio,
                           LocalTime horarioFim,
                           LocalDate dataReserva,
                           Integer posicaoAssento,
-                          Integer salaId,
-                          Integer usuarioId
+                          Integer salaId
         ){
 }

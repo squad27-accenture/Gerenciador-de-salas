@@ -8,6 +8,7 @@ CREATE TABLE reservas
     Sala_id INT NOT NULL,
     usuario_id INT,
     status_reserva TEXT NOT NULL ,
+    codigo_grupo VARCHAR(100),
 
     CONSTRAINT fk_sala_reservas
     FOREIGN KEY (sala_id)

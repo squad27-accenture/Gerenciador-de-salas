@@ -1,6 +1,6 @@
 CREATE TABLE salas(
     id SERIAL PRIMARY KEY,
-    nome VARCHAR(130) NOT NULL,
+    nome VARCHAR(130) UNIQUE NOT NULL,
     capacidade INT NOT NULL,
     equipamentos_sala TEXT NOT NULL,
     status TEXT NOT NULL ,

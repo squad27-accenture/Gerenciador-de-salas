@@ -36,7 +36,10 @@ public class Reserva{
     private Usuario usuario;
 
     @Column(name = "posicao")
-    private Integer posicaoassento;
+    private Integer posicaoAssento;
+
+    @Column(name = "codigo_grupo")
+    private String codigoGrupo;
 
     @ManyToOne
     @JoinColumn(name = "sala_id")
