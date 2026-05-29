@@ -17,22 +17,21 @@ public class TokenService {
     @Value("${api.security.token.secret}")
     private String secret;
 
-    public String generateToken(Usuario usuario){
+    public String generateToken(Usuario usuario) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
-            String token = JWT.create()
+            return JWT.create()
                     .withIssuer("gerenciador de salas")
                     .withClaim("role", usuario.getRole().name())
                     .withSubject(usuario.getEmail())
-                    .withExpiresAt(dataExpiracao())
+                    .withExpiresAt(dataExpiracaoAccessToken()) // <- 15 minutos
                     .sign(algorithm);
-            return token;
-        }catch (JWTCreationException exception){
+        } catch (JWTCreationException exception) {
             throw new RuntimeException("Erro durante a criação do token ", exception);
         }
     }
 
-    public String validateToken(String token){
+    public String validateToken(String token) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.require(algorithm)
@@ -40,12 +39,12 @@ public class TokenService {
                     .build()
                     .verify(token)
                     .getSubject();
-        }catch (JWTVerificationException exception){
+        } catch (JWTVerificationException exception) {
             return "";
         }
     }
 
-    private Instant dataExpiracao(){
-        return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
+    private Instant dataExpiracaoAccessToken() {
+        return LocalDateTime.now().plusMinutes(15).toInstant(ZoneOffset.of("-03:00")); // <- 15min
     }
 }

@@ -68,9 +68,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/cadastro").permitAll()
                         .requestMatchers(HttpMethod.POST, "/salas").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE , "/salas").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE , "/usuarios").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET , "/usuarios").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/salas/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/usuarios/deletarConta").hasAnyRole("USER", "ADMIN") // <- específica primeiro
+                        .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasRole("ADMIN")                       // <- genérica depois
+                        .requestMatchers(HttpMethod.GET, "/usuarios/listarUsuarios").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/auth/recuperar-senha").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/redefinir-senha").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)

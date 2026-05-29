@@ -44,7 +44,7 @@ public class ReservaService {
         Sala sala = salaRepository.findById(dto.salaId())
                 .orElseThrow(() -> new RuntimeException("Sala não encontrada"));
 
-        Usuario usuario = usuarioRepository.findByEmail(emailUsuario);
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
         if (usuario == null) {
             throw new RuntimeException("Usuário não encontrado");
         }
@@ -101,7 +101,7 @@ public class ReservaService {
         Sala sala = salaRepository.findById(dto.salaId())
                 .orElseThrow(() -> new RuntimeException("Sala não encontrada"));
 
-        Usuario usuario = usuarioRepository.findByEmail(emailUsuario);
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
 
         if (usuario == null) {
             throw new RuntimeException("Usuário não encontrado");

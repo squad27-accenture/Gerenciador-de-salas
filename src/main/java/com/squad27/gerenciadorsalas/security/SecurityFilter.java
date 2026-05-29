@@ -34,7 +34,13 @@ public class SecurityFilter extends OncePerRequestFilter {
         if (token != null) {
             var email = tokenService.validateToken(token);
             if (email != null && !email.isBlank()) {
-                Usuario usuario = repository.findByEmail(email);
+                var usuarioOptional = repository.findByEmail(email);
+                if (usuarioOptional.isEmpty()) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
+                var usuario = usuarioOptional.get();
 
                 if (usuario != null) {
                     var authentication = new UsernamePasswordAuthenticationToken(
@@ -66,6 +72,8 @@ public class SecurityFilter extends OncePerRequestFilter {
                 || path.startsWith("/v3/api-docs")
                 || path.equals("/swagger-ui.html")
                 || path.equals("/auth/login")
-                || path.equals("/auth/cadastro");
+                || path.equals("/auth/cadastro")
+                || path.equals("/auth/recuperar-senha")
+                || path.equals("/auth/redefinir-senha");
     }
 }
