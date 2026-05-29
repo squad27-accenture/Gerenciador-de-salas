@@ -3,6 +3,7 @@ package com.squad27.gerenciadorsalas.controller;
 import com.squad27.gerenciadorsalas.domain.Reserva;
 import com.squad27.gerenciadorsalas.dto.ReservaDTO;
 import com.squad27.gerenciadorsalas.dto.ReservaGrupoDTO;
+import com.squad27.gerenciadorsalas.dto.ReservaResponseDTO;
 import com.squad27.gerenciadorsalas.services.ReservaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,14 +30,20 @@ private ReservaService reservaService;
     }
 
     @PostMapping("reservaGrupo")
-    public ResponseEntity<List<Reserva>> reservaGrupo(@RequestBody ReservaGrupoDTO grupoDTO, @AuthenticationPrincipal UserDetails userDetails
+    public ResponseEntity<List<ReservaResponseDTO>> reservaGrupo(
+            @RequestBody ReservaGrupoDTO grupoDTO,
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
         List<Reserva> reservas = reservaService.reservaGrupo(
                 grupoDTO,
                 userDetails.getUsername()
         );
 
-        return ResponseEntity.ok(reservas);
+        List<ReservaResponseDTO> resposta = reservas.stream()
+                .map(ReservaResponseDTO::new)
+                .toList();
+
+        return ResponseEntity.ok(resposta);
     }
 
 

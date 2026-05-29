@@ -2,6 +2,7 @@ package com.squad27.gerenciadorsalas.controller;
 
 import com.squad27.gerenciadorsalas.domain.Sala;
 import com.squad27.gerenciadorsalas.dto.AssentoReponseDTO;
+import com.squad27.gerenciadorsalas.dto.SalaResponseDTO;
 import com.squad27.gerenciadorsalas.services.ReservaService;
 import com.squad27.gerenciadorsalas.services.SalaService;
 import com.squad27.gerenciadorsalas.dto.SalaDTO;
@@ -35,8 +36,9 @@ public class SalaController {
     }
 
     @GetMapping("ListarSala")
-    public List<Sala> listarSalas(){
-        return salaService.listarsalas();
+    public ResponseEntity<List<SalaResponseDTO>> listarSalas(){
+        List<SalaResponseDTO> salas = salaService.listarSalas();
+        return ResponseEntity.ok(salas);
     }
 
 

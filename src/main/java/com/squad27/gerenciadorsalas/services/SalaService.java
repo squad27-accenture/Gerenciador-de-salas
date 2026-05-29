@@ -4,6 +4,7 @@ import com.squad27.gerenciadorsalas.domain.Assento;
 import com.squad27.gerenciadorsalas.domain.Sala;
 import com.squad27.gerenciadorsalas.dto.AssentoReponseDTO;
 import com.squad27.gerenciadorsalas.dto.SalaDTO;
+import com.squad27.gerenciadorsalas.dto.SalaResponseDTO;
 import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,9 +69,18 @@ public class SalaService {
         return repository.save(sala);
     }
 
-    public List<Sala> listarsalas(){
-
-        return repository.findAll();
+    public List<SalaResponseDTO> listarSalas() {
+        return repository.findAll()
+                .stream()
+                .map(sala -> new SalaResponseDTO(
+                        sala.getId(),
+                        sala.getNome(),
+                        sala.getCapacidade(),
+                        sala.getLocal(),
+                        sala.getCidade(),
+                        sala.getEstado()
+                ))
+                .toList();
     }
 
     public void deletarSalaPorId(Integer id){
