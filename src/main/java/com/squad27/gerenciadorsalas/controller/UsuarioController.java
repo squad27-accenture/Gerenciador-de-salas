@@ -1,12 +1,14 @@
 package com.squad27.gerenciadorsalas.controller;
 
 
-import com.squad27.gerenciadorsalas.domain.Sala;
 import com.squad27.gerenciadorsalas.domain.Usuario;
 import com.squad27.gerenciadorsalas.dto.UsuarioDTO;
+import com.squad27.gerenciadorsalas.dto.UsuarioResponseDTO;
 import com.squad27.gerenciadorsalas.services.UsuarioService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +28,14 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
+    @GetMapping("buscar")
+    public ResponseEntity<UsuarioResponseDTO> vizualizarDados(@RequestParam Integer id){
+
+        var usuario = usuarioService.buscarMeuPerfil(id);
+
+        return ResponseEntity.ok(usuario);
+    }
+
     @DeleteMapping("DeletarUsuario")
     public ResponseEntity<String> deletarUsuarioPorId(@RequestParam Integer id){
 
@@ -34,17 +44,28 @@ public class UsuarioController {
         return ResponseEntity.ok("USUARIO DELETADO!");
     }
 
+    @DeleteMapping("deletarConta")
+    public ResponseEntity<String> deletarConta() {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String emailAutenticado = authentication.getName();
+
+        System.out.println("EMAIL AUTENTICADO: [" + emailAutenticado + "]");
+
+        usuarioService.deletarUsuarioAutenticado(emailAutenticado);
+
+        return ResponseEntity.ok("CONTA DELETADA");
+    }
+
+
+
     @PutMapping("atualizarConta")
-    public ResponseEntity<String> atualizarUsuarioPorId(@RequestParam Integer id , @RequestBody UsuarioDTO usuarioDTO){
+    public ResponseEntity<String> atualizarUsuarioPorId(@RequestBody UsuarioDTO usuarioDTO){
 
-        Usuario usuario = Usuario.builder()
-                .email(usuarioDTO.email())
-                .senha(usuarioDTO.senha())
-                .username(usuarioDTO.username())
-                .role(usuarioDTO.role())
-                .build();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String usernameAutenticado = authentication.getName();
 
-        usuarioService.atualizarUsuarioPorId(id , usuario);
+        usuarioService.atualizarUsuarioAutenticado(usernameAutenticado, usuarioDTO);
 
         return ResponseEntity.ok("USUARIO ATUALIZADO");
 
