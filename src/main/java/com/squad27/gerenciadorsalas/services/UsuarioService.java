@@ -25,7 +25,7 @@ public class UsuarioService {
         return usuarioRepository.findAll();
     }
 
-   public UsuarioResponseDTO buscarMeuPerfil(Integer id){
+   public UsuarioResponseDTO buscarMeuPerfilPorId(Integer id){
 
        Usuario usuario = usuarioRepository.findById(id)
                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
@@ -38,6 +38,18 @@ public class UsuarioService {
                usuario.getRole()
        );
    }
+
+    public UsuarioResponseDTO buscarMeuPerfilPorEmail(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado"));
+
+        return new UsuarioResponseDTO(
+                usuario.getId(),
+                usuario.getUsername(),
+                usuario.getEmail(),
+                usuario.getRole()
+        );
+    }
 
     public void deletarUsuarioPorId(Integer id){
 
