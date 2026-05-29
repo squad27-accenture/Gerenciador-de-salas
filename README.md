@@ -14,6 +14,8 @@ API desenvolvida para resolver a dificuldade de coordenar o uso de salas e assen
 - **Flyway** (migrations)
 - **Lombok**
 - **Auth0 Java JWT 4.5.2**
+- **Spring Mail** (recuperação de senha via e-mail)
+- **SpringDoc OpenAPI 3.0.3** (Swagger UI)
 
 ---
 
@@ -23,22 +25,41 @@ API desenvolvida para resolver a dificuldade de coordenar o uso de salas e assen
 src/
 ├── controller/
 │   ├── AuthController.java
+│   ├── PasswordResetController.java
+│   ├── ReservaController.java
 │   ├── SalaController.java
 │   └── UsuarioController.java
 ├── domain/
-│   ├── Sala.java
-│   ├── Usuario.java
+│   ├── Assento.java
+│   ├── EquipamentosAssento.java
+│   ├── EquipamentosSala.java
+│   ├── PasswordResetToken.java
+│   ├── RefreshToken.java
+│   ├── Reserva.java
 │   ├── Role.java
-│   └── StatusSala.java
+│   ├── Sala.java
+│   ├── StatusReserva.java
+│   ├── StatusSala.java
+│   └── Usuario.java
 ├── dto/
+│   ├── AssentoReponseDTO.java
 │   ├── AuthorizationDTO.java
 │   ├── LoginResponse.java
+│   ├── RedefinirSenhaDTO.java
 │   ├── RegisterDTO.java
+│   ├── ReservaDTO.java
+│   ├── ReservaGrupoDTO.java
 │   ├── SalaDTO.java
-│   └── UsuarioDTO.java
+│   ├── SolicitarRecuperacaoDTO.java
+│   ├── UsuarioDTO.java
+│   └── UsuarioResponseDTO.java
 ├── exception/
 │   └── GlobalExceptionHandler.java
 ├── repositories/
+│   ├── AssentoRepository.java
+│   ├── PasswordResetTokenRepository.java
+│   ├── RefreshTokenRepository.java
+│   ├── ReservaRepository.java
 │   ├── SalaRepository.java
 │   └── UsuarioRepository.java
 ├── security/
@@ -47,6 +68,9 @@ src/
 │   └── TokenService.java
 └── services/
     ├── AuthorizationService.java
+    ├── PasswordResetService.java
+    ├── RefreshTokenService.java
+    ├── ReservaService.java
     ├── SalaService.java
     └── UsuarioService.java
 ```
@@ -75,6 +99,8 @@ A API utiliza autenticação via **JWT (Bearer Token)**. Para acessar os endpoin
 |--------|------|-----------|-------------|
 | POST | `/auth/login` | Login e geração de token JWT | ❌ |
 | POST | `/auth/cadastro` | Cadastro de novo usuário | ❌ |
+| POST | `/auth/recuperar-senha` | Solicita código de recuperação de senha por e-mail | ❌ |
+| POST | `/auth/redefinir-senha` | Redefine a senha usando o código recebido | ❌ |
 
 **Login — Body:**
 ```json
@@ -91,16 +117,34 @@ A API utiliza autenticação via **JWT (Bearer Token)**. Para acessar os endpoin
 }
 ```
 
+**Solicitar recuperação de senha — Body:**
+```json
+{
+  "email": "usuario@empresa.com"
+}
+```
+
+**Redefinir senha — Body:**
+```json
+{
+  "email": "usuario@empresa.com",
+  "codigo": "123456",
+  "novaSenha": "novaSenha123"
+}
+```
+
 ---
 
 ### 🏠 Salas — `/salas`
 
 | Método | Rota | Descrição | Role necessária |
 |--------|------|-----------|----------------|
-| GET | `/salas` | Lista todas as salas | Autenticado |
-| POST | `/salas` | Cadastra nova sala | ADMIN |
-| PUT | `/salas?id={id}` | Atualiza sala por ID | Autenticado |
-| DELETE | `/salas?id={id}` | Deleta sala por ID | ADMIN |
+| GET | `/salas/ListarSala` | Lista todas as salas | Autenticado |
+| POST | `/salas/CadastrarSala` | Cadastra nova sala | ADMIN |
+| PUT | `/salas/AtualizarSala?id={id}` | Atualiza sala por ID | Autenticado |
+| DELETE | `/salas/DeletarSala?id={id}` | Deleta sala por ID | ADMIN |
+| GET | `/salas/{id}/assentos` | Lista os assentos de uma sala | Autenticado |
+| GET | `/salas/ocupados` | Retorna assentos ocupados em um intervalo de tempo | Autenticado |
 
 **Cadastrar/Atualizar sala — Body:**
 ```json
@@ -114,15 +158,57 @@ A API utiliza autenticação via **JWT (Bearer Token)**. Para acessar os endpoin
 
 **Status disponíveis:** `DISPONIVEL`, `INDISPONIVEL`, `MANUTENCAO`
 
+**Buscar assentos ocupados — Query Params:**
+```
+salaId=1&dataReserva=2025-06-01&horarioInicio=09:00&horarioFim=11:00
+```
+
+---
+
+### 📅 Reservas — `/reserva`
+
+| Método | Rota | Descrição | Autenticação |
+|--------|------|-----------|-------------|
+| POST | `/reserva/realizarReserva` | Realiza reserva de um assento | ✅ |
+| POST | `/reserva/reservaGrupo` | Realiza reserva de múltiplos assentos para um grupo | ✅ |
+| PUT | `/reserva/{id}/cancelar` | Cancela uma reserva individual | ✅ |
+| PUT | `/reserva/grupo/{codigoGrupo}/cancelar` | Cancela todas as reservas de um grupo | ✅ |
+
+**Realizar reserva — Body:**
+```json
+{
+  "horarioInicio": "09:00",
+  "horarioFim": "11:00",
+  "dataReserva": "2025-06-01",
+  "posicaoAssento": 3,
+  "salaId": 1
+}
+```
+
+**Reserva em grupo — Body:**
+```json
+{
+  "horarioInicio": "09:00",
+  "horarioFim": "11:00",
+  "dataReserva": "2025-06-01",
+  "salaId": 1,
+  "posicoesAssentos": [1, 2, 3]
+}
+```
+
+**Status de reserva disponíveis:** `EmANDAMENTO`, `FINALIZADA`, `CANCELADA`
+
 ---
 
 ### 👤 Usuários — `/usuarios`
 
 | Método | Rota | Descrição | Role necessária |
 |--------|------|-----------|----------------|
-| GET | `/usuarios` | Lista todos os usuários | Autenticado |
-| PUT | `/usuarios?id={id}` | Atualiza usuário por ID | Autenticado |
-| DELETE | `/usuarios?id={id}` | Deleta usuário por ID | Autenticado |
+| GET | `/usuarios/listarUsuarios` | Lista todos os usuários | Autenticado |
+| GET | `/usuarios/buscar?id={id}` | Busca dados de um usuário por ID | Autenticado |
+| PUT | `/usuarios/atualizarConta` | Atualiza dados do usuário autenticado | Autenticado |
+| DELETE | `/usuarios/DeletarUsuario?id={id}` | Deleta usuário por ID | ADMIN |
+| DELETE | `/usuarios/deletarConta` | Deleta a própria conta do usuário autenticado | Autenticado |
 
 **Atualizar usuário — Body:**
 ```json
@@ -160,6 +246,29 @@ O projeto utiliza **PostgreSQL** como banco de dados e **Flyway** para controle 
 | status | TEXT | NOT NULL |
 | local | TEXT | NOT NULL |
 
+### Tabela `assentos`
+| Campo | Tipo | Restrição |
+|-------|------|-----------|
+| id | SERIAL | PRIMARY KEY |
+| sala_id | INT | NOT NULL, FK → salas(id) |
+| posicao | INT | NOT NULL |
+| equipamento_assento | TEXT | — |
+
+**Equipamentos de assento disponíveis:** `Computador`, `ApenasMonitor`, `Tela_4k`
+
+### Tabela `reservas`
+| Campo | Tipo | Restrição |
+|-------|------|-----------|
+| id | SERIAL | PRIMARY KEY |
+| horario_inicio | TIME | NOT NULL |
+| horario_fim | TIME | NOT NULL |
+| data_reserva | DATE | NOT NULL |
+| posicao | INT | NOT NULL |
+| sala_id | INT | NOT NULL, FK → salas(id) |
+| usuario_id | INT | FK → usuarios(id) |
+| status_reserva | TEXT | NOT NULL |
+| codigo_grupo | VARCHAR(100) | — |
+
 ---
 
 ## ⚙️ Configuração
@@ -167,11 +276,28 @@ O projeto utiliza **PostgreSQL** como banco de dados e **Flyway** para controle 
 Configure as variáveis no `application.properties`:
 
 ```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/gerenciador_salas
-spring.datasource.username=seu_usuario
-spring.datasource.password=sua_senha
+spring.datasource.url=jdbc:postgresql://localhost:5432/gerenciadordesala
+spring.datasource.username=postgres
+spring.datasource.password=${DB_PASSWORD}
 
-api.security.token.secret=seu_secret_jwt
+api.security.token.secret=${JWT_SECRET:my-secret-key}
+
+spring.mail.host=smtp.sendgrid.net
+spring.mail.port=587
+spring.mail.username=apikey
+spring.mail.password=${API_KEY}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+```
+
+---
+
+## 📖 Documentação (Swagger)
+
+Com a aplicação rodando, acesse a documentação interativa em:
+
+```
+http://localhost:8080/swagger-ui.html
 ```
 
 ---
@@ -197,11 +323,12 @@ A API estará disponível em `http://localhost:8080`.
 
 As funcionalidades abaixo fazem parte do escopo do projeto e serão implementadas nas próximas sprints:
 
-- [ ] **Reserva de salas e assentos** — agendamento por dia e horário
-- [ ] **Consulta por disponibilidade** — filtro por dia, horário, lotação, local e tipo
+- [x] **Reserva de salas e assentos** — agendamento por dia e horário
+- [x] **Consulta por disponibilidade** — filtro por dia, horário e sala
+- [x] **Gestão de reservas** — cancelamento individual e em grupo
+- [x] **Recuperação de senha** — envio de código por e-mail
 - [ ] **Recomendação inteligente com IA** — sugestão da melhor sala com base nos critérios do usuário
 - [ ] **Extração automática de layout** — leitura da planta da sala para mapear assentos automaticamente
-- [ ] **Gestão de reservas** — visualização, edição e cancelamento de reservas
 
 ---
 
