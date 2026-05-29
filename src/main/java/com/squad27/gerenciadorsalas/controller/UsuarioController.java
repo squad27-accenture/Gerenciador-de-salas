@@ -28,11 +28,11 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
-    @GetMapping("buscar")
-    public ResponseEntity<UsuarioResponseDTO> vizualizarDados(@RequestParam Integer id){
-
-        var usuario = usuarioService.buscarMeuPerfil(id);
-
+    @GetMapping("meuPerfil")
+    public ResponseEntity<UsuarioResponseDTO> verMeuPerfil() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        var usuario = usuarioService.buscarMeuPerfilPorEmail(email);
         return ResponseEntity.ok(usuario);
     }
 
