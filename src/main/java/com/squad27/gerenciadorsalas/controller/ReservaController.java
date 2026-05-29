@@ -21,12 +21,12 @@ public class ReservaController {
 private ReservaService reservaService;
 
     @PostMapping("realizarReserva")
-    public ResponseEntity<Reserva> RealizarReserva(@RequestBody ReservaDTO dto, @AuthenticationPrincipal UserDetails userDetails) {
-        {
-
-            Reserva reserva = reservaService.ReservarAssento(dto, userDetails.getUsername());
-            return ResponseEntity.ok(reserva);
-        }
+    public ResponseEntity<ReservaResponseDTO> realizarReserva(
+            @RequestBody ReservaDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        Reserva reserva = reservaService.ReservarAssento(dto, userDetails.getUsername());
+        return ResponseEntity.ok(new ReservaResponseDTO(reserva));
     }
 
     @PostMapping("reservaGrupo")

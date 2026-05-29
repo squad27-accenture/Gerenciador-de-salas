@@ -64,17 +64,17 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/refresh")
-    public ResponseEntity<Map<String, String>> refresh(@RequestBody Map<String, String> body) {
-        try {
-            String token = body.get("refreshToken");
-            RefreshToken refreshToken = refreshTokenService.validar(token);
-            String novoAccessToken = tokenService.generateToken(refreshToken.getUsuario());
-            return ResponseEntity.ok(Map.of("accessToken", novoAccessToken));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(401).body(Map.of("erro", e.getMessage()));
+        @PostMapping("/refresh")
+        public ResponseEntity<Map<String, String>> refresh(@RequestBody Map<String, String> body) {
+            try {
+                String token = body.get("refreshToken");
+                RefreshToken refreshToken = refreshTokenService.validar(token);
+                String novoAccessToken = tokenService.generateToken(refreshToken.getUsuario());
+                return ResponseEntity.ok(Map.of("accessToken", novoAccessToken));
+            } catch (RuntimeException e) {
+                return ResponseEntity.status(401).body(Map.of("erro", e.getMessage()));
+            }
         }
-    }
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(@RequestBody Map<String, String> body) {

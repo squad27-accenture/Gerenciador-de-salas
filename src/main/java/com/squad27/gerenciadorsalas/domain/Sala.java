@@ -19,15 +19,26 @@ public class Sala {
     private Integer id;
     private  String nome;
     private Integer capacidade;
+
+    @ElementCollection(targetClass = EquipamentosSala.class)
+    @CollectionTable(
+        name = "sala_equipamentos",
+            joinColumns = @JoinColumn(name = "sala_id")
+
+    )
     @Enumerated(EnumType.STRING)
-    @Column(name = "equipamentos_sala")
-    private EquipamentosSala equipamentosSala;
+    @Column(name = "equipamento")
+    private List<EquipamentosSala> equipamentosSala;
+
+
+
     @Enumerated(EnumType.STRING)
     private StatusSala status;
     private String local;
     private String estado;
     private String cidade;
 
+    @Builder.Default
     @OneToMany(mappedBy = "sala", cascade = CascadeType.ALL)
     private List<Assento> assentos = new ArrayList<>();
 
