@@ -11,61 +11,55 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/reserva/")
+@RequestMapping("/api/v1/reserva/")
 public class ReservaController {
 
-@Autowired
-private ReservaService reservaService;
+    @Autowired
+    private ReservaService reservaService;
 
     @PostMapping("realizarReserva")
-    public ResponseEntity<ReservaResponseDTO> realizarReserva(
-            @RequestBody ReservaDTO dto,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+    public ResponseEntity<ReservaResponseDTO> realizarReserva(@RequestBody ReservaDTO dto, @AuthenticationPrincipal UserDetails userDetails) {
+
         Reserva reserva = reservaService.ReservarAssento(dto, userDetails.getUsername());
         return ResponseEntity.ok(new ReservaResponseDTO(reserva));
     }
 
     @PostMapping("reservaGrupo")
-    public ResponseEntity<List<ReservaResponseDTO>> reservaGrupo(
-            @RequestBody ReservaGrupoDTO grupoDTO,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        List<Reserva> reservas = reservaService.reservaGrupo(
-                grupoDTO,
-                userDetails.getUsername()
-        );
+    public ResponseEntity<List<ReservaResponseDTO>> reservaGrupo(@RequestBody ReservaGrupoDTO grupoDTO, @AuthenticationPrincipal UserDetails userDetails) {
 
-        List<ReservaResponseDTO> resposta = reservas.stream()
-                .map(ReservaResponseDTO::new)
-                .toList();
-
-        return ResponseEntity.ok(resposta);
+        List<Reserva> reservas = reservaService.reservaGrupo(grupoDTO, userDetails.getUsername());
+        return ResponseEntity.ok(reservas.stream().map(ReservaResponseDTO::new).toList());
     }
 
-
     @PutMapping("{id}/cancelar")
-    public ResponseEntity<Reserva> cancelarReserva(
-            @PathVariable Integer id, @AuthenticationPrincipal UserDetails userDetails)
-    {
+    public ResponseEntity<ReservaResponseDTO> cancelarReserva(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDetails) {
+
         Reserva reserva = reservaService.cancelarReserva(id, userDetails.getUsername());
-        return ResponseEntity.ok(reserva);
+        return ResponseEntity.ok(new ReservaResponseDTO(reserva));
     }
 
     @PutMapping("grupo/{codigoGrupo}/cancelar")
-    public ResponseEntity<List<Reserva>> cancelarReservaGrupo(
-            @PathVariable String codigoGrupo,
-            @AuthenticationPrincipal UserDetails userDetails
+    public ResponseEntity<List<ReservaResponseDTO>> cancelarReservaGrupo(@PathVariable String codigoGrupo, @AuthenticationPrincipal UserDetails userDetails) {
+
+        List<Reserva> reservas = reservaService.cancelarReservaGrupo(codigoGrupo, userDetails.getUsername());
+
+        return ResponseEntity.ok(reservas.stream().map(ReservaResponseDTO::new).toList());
+    }
+    @GetMapping("historico")
+    public ResponseEntity<List<Reserva>> historico(
+            @RequestParam(required = false) Integer usuarioId,
+            @RequestParam(required = false) Integer salaId,
+            @RequestParam(required = false) LocalDate dataInicio,
+            @RequestParam(required = false) LocalDate dataFim,
+            Principal principal
     ) {
-        List<Reserva> reservas = reservaService.cancelarReservaGrupo(
-                codigoGrupo,
-                userDetails.getUsername()
+        return ResponseEntity.ok(
+                reservaService.buscarHistorico(usuarioId, salaId, dataInicio, dataFim)
         );
-
-        return ResponseEntity.ok(reservas);
     }
-
-    }
+}

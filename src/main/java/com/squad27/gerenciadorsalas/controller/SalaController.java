@@ -15,7 +15,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/salas/")
+@RequestMapping("/api/v1/salas/")
 
 public class SalaController {
 
@@ -27,12 +27,16 @@ public class SalaController {
     ReservaService reservaService;
 
     @PostMapping("CadastrarSala")
-    public ResponseEntity<Sala> cadastrarSala(@RequestBody SalaDTO salaDTO){
-
+    public ResponseEntity<SalaResponseDTO> cadastrarSala(@RequestBody SalaDTO salaDTO) {
         Sala salaSalva = salaService.cadastrarsala(salaDTO);
-        return ResponseEntity.ok(salaSalva);
-
-
+        return ResponseEntity.ok(new SalaResponseDTO(
+                salaSalva.getId(),
+                salaSalva.getNome(),
+                salaSalva.getCapacidade(),
+                salaSalva.getLocal(),
+                salaSalva.getCidade(),
+                salaSalva.getEstado()
+        ));
     }
 
     @GetMapping("ListarSala")

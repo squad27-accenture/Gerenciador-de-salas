@@ -7,6 +7,7 @@ import com.squad27.gerenciadorsalas.dto.SalaDTO;
 import com.squad27.gerenciadorsalas.dto.SalaResponseDTO;
 import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public class SalaService {
         Sala sala = new Sala();
         String nome = salaDTO.nome().trim();
 
-        if (repository.existsByNomeIgnoreCase(nome)) {
+        if (repository.existsByNomeIgnoreCaseAndDeletadoFalse(nome)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Já existe uma sala com esse nome."
@@ -66,11 +67,12 @@ public class SalaService {
         sala.setCidade(salaDTO.cidade());
         sala.setEstado(salaDTO.estado());
         sala.setEquipamentosSala(salaDTO.equipamentosSala());
+        sala.setDeletado(false);
         return repository.save(sala);
     }
 
     public List<SalaResponseDTO> listarSalas() {
-        return repository.findAll()
+        return repository.findAllByDeletadoFalse()
                 .stream()
                 .map(sala -> new SalaResponseDTO(
                         sala.getId(),
@@ -83,21 +85,23 @@ public class SalaService {
                 .toList();
     }
 
-    public void deletarSalaPorId(Integer id){
-
-        repository.deleteById(id);
-
+    @Transactional
+    public void deletarSalaPorId(Integer id) {
+        if (!repository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada.");
+        }
+        repository.softDeleteById(id);
     }
 
-    public void deletarSalaPorNome(String nome){
-
-        repository.deleteByNome(nome);
+    @Transactional
+    public void deletarSalaPorNome(String nome) {
+        repository.softDeleteByNome(nome);
     }
 
     public void atualizarSalaPorId (Integer id , Sala sala){
 
-        Sala salaEntity = repository.findById(id).orElseThrow(
-                ()-> new RuntimeException("Id nao encontrado!")
+        Sala salaEntity = repository.findByIdAndDeletadoFalse(id).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada.")
         );
 
         Sala salaAtualizado = Sala.builder()
@@ -106,6 +110,7 @@ public class SalaService {
                 .status(sala.getStatus() != null ? sala.getStatus() : salaEntity.getStatus())
                 .id(salaEntity.getId())
                 .local(sala.getLocal() != null ? sala.getLocal() : salaEntity.getLocal())
+                .deletado(false)
                 .build();
 
         repository.saveAndFlush(salaAtualizado);

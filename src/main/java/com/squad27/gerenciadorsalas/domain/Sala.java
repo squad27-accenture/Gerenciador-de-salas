@@ -31,6 +31,11 @@ public class Sala {
     private List<EquipamentosSala> equipamentosSala;
 
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean deletado = false;
+
+
 
     @Enumerated(EnumType.STRING)
     private StatusSala status;

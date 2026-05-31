@@ -5,6 +5,8 @@ import com.squad27.gerenciadorsalas.domain.Reserva;
 import com.squad27.gerenciadorsalas.domain.StatusReserva;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -49,5 +51,20 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
             LocalTime horarioInicio,
             LocalTime horarioFim,
             StatusReserva statusCancelada
+    );
+
+    @Query("""
+        SELECT r FROM Reserva r
+        WHERE (:usuarioId IS NULL OR r.usuario.id = :usuarioId)
+        AND (:salaId IS NULL OR r.sala.id = :salaId)
+        AND (:dataInicio IS NULL OR r.dataReserva >= :dataInicio)
+        AND (:dataFim IS NULL OR r.dataReserva <= :dataFim)
+        ORDER BY r.dataReserva DESC, r.horarioInicio DESC
+        """)
+    List<Reserva> buscarHistorico(
+            @Param("usuarioId") Integer usuarioId,
+            @Param("salaId") Integer salaId,
+            @Param("dataInicio") LocalDate dataInicio,
+            @Param("dataFim") LocalDate dataFim
     );
 }
