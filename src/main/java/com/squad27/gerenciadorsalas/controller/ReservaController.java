@@ -11,6 +11,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -47,5 +49,17 @@ public class ReservaController {
         List<Reserva> reservas = reservaService.cancelarReservaGrupo(codigoGrupo, userDetails.getUsername());
 
         return ResponseEntity.ok(reservas.stream().map(ReservaResponseDTO::new).toList());
+    }
+    @GetMapping("historico")
+    public ResponseEntity<List<Reserva>> historico(
+            @RequestParam(required = false) Integer usuarioId,
+            @RequestParam(required = false) Integer salaId,
+            @RequestParam(required = false) LocalDate dataInicio,
+            @RequestParam(required = false) LocalDate dataFim,
+            Principal principal
+    ) {
+        return ResponseEntity.ok(
+                reservaService.buscarHistorico(usuarioId, salaId, dataInicio, dataFim)
+        );
     }
 }

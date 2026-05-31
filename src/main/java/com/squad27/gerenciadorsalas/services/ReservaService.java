@@ -27,17 +27,19 @@ public class ReservaService {
     private final UsuarioRepository usuarioRepository;
     private final SalaRepository salaRepository;
     private final AssentoRepository assentoRepository;
+    private final NotificacaoEmailService notificacaoEmailService;
 
     public ReservaService(
             ReservaRepository reservaRepository,
             UsuarioRepository usuarioRepository,
             SalaRepository salaRepository,
-            AssentoRepository assentoRepository
+            AssentoRepository assentoRepository, NotificacaoEmailService notificacaoEmailService
     ) {
         this.reservaRepository = reservaRepository;
         this.usuarioRepository = usuarioRepository;
         this.salaRepository = salaRepository;
         this.assentoRepository = assentoRepository;
+        this.notificacaoEmailService = notificacaoEmailService;
     }
 
     public Reserva ReservarAssento(ReservaDTO dto, String emailUsuario) {
@@ -66,7 +68,20 @@ public class ReservaService {
         reserva.setStatusReserva(StatusReserva.EmANDAMENTO);
         reserva.setPosicaoAssento(dto.posicaoAssento());
 
-        return reservaRepository.save(reserva);
+        Reserva salva = reservaRepository.save(reserva);
+
+        notificacaoEmailService.enviarConfirmacaoReserva(
+                usuario.getEmail(),
+                usuario.getUsername(),
+                sala.getNome(),
+                dto.dataReserva().toString(),
+                dto.horarioInicio().toString(),
+                dto.horarioFim().toString(),
+                dto.posicaoAssento()
+        );
+
+        return salva;
+
     }
 
     public List<Reserva> reservaGrupo(ReservaGrupoDTO dto, String emailUsuario) {
@@ -104,7 +119,19 @@ public class ReservaService {
             reservas.add(reserva);
         }
 
-        return reservaRepository.saveAll(reservas);
+        List<Reserva> salvas = reservaRepository.saveAll(reservas);
+
+        notificacaoEmailService.enviarConfirmacaoReservaGrupo(
+                usuario.getEmail(),
+                usuario.getUsername(),
+                sala.getNome(),
+                dto.dataReserva().toString(),
+                dto.horarioInicio().toString(),
+                dto.horarioFim().toString(),
+                dto.posicoesAssentos()
+        );
+
+        return salvas;
     }
 
     public Reserva cancelarReserva(Integer reservaId, String emailUsuario) {
@@ -116,7 +143,20 @@ public class ReservaService {
         }
 
         reserva.setStatusReserva(StatusReserva.CANCELADA);
-        return reservaRepository.save(reserva);
+
+        Reserva salva = reservaRepository.save(reserva);
+
+        notificacaoEmailService.enviarCancelamentoReserva(
+                reserva.getUsuario().getEmail(),
+                reserva.getUsuario().getUsername(),
+                reserva.getSala().getNome(),
+                reserva.getDataReserva().toString(),
+                reserva.getHorarioInicio().toString(),
+                reserva.getHorarioFim().toString(),
+                reserva.getPosicaoAssento()
+        );
+
+        return salva;
     }
 
     public List<Reserva> cancelarReservaGrupo(String codigoGrupo, String emailUsuario) {
@@ -133,7 +173,24 @@ public class ReservaService {
             reserva.setStatusReserva(StatusReserva.CANCELADA);
         }
 
-        return reservaRepository.saveAll(reservas);
+        List<Reserva> salvas = reservaRepository.saveAll(reservas);
+
+        Reserva primeira = salvas.get(0);
+        List<Integer> posicoes = salvas.stream()
+                .map(Reserva::getPosicaoAssento)
+                .toList();
+
+        notificacaoEmailService.enviarCancelamentoReservaGrupo(
+                primeira.getUsuario().getEmail(),
+                primeira.getUsuario().getUsername(),
+                primeira.getSala().getNome(),
+                primeira.getDataReserva().toString(),
+                primeira.getHorarioInicio().toString(),
+                primeira.getHorarioFim().toString(),
+                posicoes
+        );
+
+        return salvas;
     }
 
     public List<Integer> buscarAssentosOcupados(
@@ -166,5 +223,10 @@ public class ReservaService {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT, "Assento " + posicao + " já está reservado nesse horário.");
         }
+    }
+
+    public List<Reserva> buscarHistorico(Integer usuarioId, Integer salaId,
+                                         LocalDate dataInicio, LocalDate dataFim) {
+        return reservaRepository.buscarHistorico(usuarioId, salaId, dataInicio, dataFim);
     }
 }
