@@ -40,28 +40,13 @@ public class ReservaService {
         this.assentoRepository = assentoRepository;
     }
 
-    public Reserva ReservarAssento (ReservaDTO dto, String emailUsuario){
+    public Reserva ReservarAssento(ReservaDTO dto, String emailUsuario) {
         Sala sala = salaRepository.findById(dto.salaId())
                 .orElseThrow(() -> new RuntimeException("Sala não encontrada"));
 
         Usuario usuario = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
-        if (usuario == null) {
-            throw new RuntimeException("Usuário não encontrado");
-        }
 
-        if (dto.horarioInicio() == null || dto.horarioFim() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Horário de início e fim são obrigatórios."
-            );
-        }
-
-        if (!dto.horarioInicio().isBefore(dto.horarioFim())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "O horário inicial precisa ser antes do horário final."
-            );
-        }
+        validarHorarios(dto.horarioInicio(), dto.horarioFim());
 
         assentoRepository.findBySalaIdAndPosicao(dto.salaId(), dto.posicaoAssento())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -69,21 +54,8 @@ public class ReservaService {
                         "Assento não encontrado nessa sala."
                 ));
 
-        boolean ocupado = reservaRepository.existeConflitoDeHorario(
-                dto.salaId(),
-                dto.posicaoAssento(),
-                dto.dataReserva(),
-                dto.horarioInicio(),
-                dto.horarioFim(),
-                StatusReserva.CANCELADA
-        );
-
-        if (ocupado){
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Esse assento já está reservado nesse horário."
-            );
-        }
+        validarConflito(dto.salaId(), dto.posicaoAssento(), dto.dataReserva(),
+                dto.horarioInicio(), dto.horarioFim());
 
         Reserva reserva = new Reserva();
         reserva.setHorarioInicio(dto.horarioInicio());
@@ -103,17 +75,24 @@ public class ReservaService {
 
         Usuario usuario = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
 
-        if (usuario == null) {
-            throw new RuntimeException("Usuário não encontrado");
+        validarHorarios(dto.horarioInicio(), dto.horarioFim());
+
+
+        for (Integer posicao : dto.posicoesAssentos()) {
+            assentoRepository.findBySalaIdAndPosicao(dto.salaId(), posicao)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Assento " + posicao + " não encontrado nessa sala."
+                    ));
+            validarConflito(dto.salaId(), posicao, dto.dataReserva(),
+                    dto.horarioInicio(), dto.horarioFim());
         }
 
         String codigoGrupo = UUID.randomUUID().toString();
-
         List<Reserva> reservas = new ArrayList<>();
 
         for (Integer posicao : dto.posicoesAssentos()) {
             Reserva reserva = new Reserva();
-
             reserva.setHorarioInicio(dto.horarioInicio());
             reserva.setHorarioFim(dto.horarioFim());
             reserva.setDataReserva(dto.dataReserva());
@@ -122,7 +101,6 @@ public class ReservaService {
             reserva.setStatusReserva(StatusReserva.EmANDAMENTO);
             reserva.setPosicaoAssento(posicao);
             reserva.setCodigoGrupo(codigoGrupo);
-
             reservas.add(reserva);
         }
 
@@ -138,7 +116,6 @@ public class ReservaService {
         }
 
         reserva.setStatusReserva(StatusReserva.CANCELADA);
-
         return reservaRepository.save(reserva);
     }
 
@@ -153,7 +130,6 @@ public class ReservaService {
             if (!reserva.getUsuario().getEmail().equals(emailUsuario)) {
                 throw new RuntimeException("Você não pode cancelar uma reserva de outro usuário");
             }
-
             reserva.setStatusReserva(StatusReserva.CANCELADA);
         }
 
@@ -161,17 +137,34 @@ public class ReservaService {
     }
 
     public List<Integer> buscarAssentosOcupados(
-            Integer salaId,
-            LocalDate dataReserva,
-            LocalTime horarioInicio,
-            LocalTime horarioFim
+            Integer salaId, LocalDate dataReserva,
+            LocalTime horarioInicio, LocalTime horarioFim
     ) {
         return reservaRepository.buscarPosicoesOcupadas(
-                salaId,
-                dataReserva,
-                horarioInicio,
-                horarioFim,
-                StatusReserva.CANCELADA
+                salaId, dataReserva, horarioInicio, horarioFim, StatusReserva.CANCELADA
         );
+    }
+
+
+
+    private void validarHorarios(LocalTime inicio, LocalTime fim) {
+        if (inicio == null || fim == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Horário de início e fim são obrigatórios.");
+        }
+        if (!inicio.isBefore(fim)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "O horário inicial precisa ser antes do horário final.");
+        }
+    }
+
+    private void validarConflito(Integer salaId, Integer posicao, LocalDate data,
+                                 LocalTime inicio, LocalTime fim) {
+        boolean ocupado = reservaRepository.existeConflitoDeHorario(
+                salaId, posicao, data, inicio, fim, StatusReserva.CANCELADA);
+        if (ocupado) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Assento " + posicao + " já está reservado nesse horário.");
+        }
     }
 }

@@ -17,55 +17,35 @@ import java.util.List;
 @RequestMapping("/api/v1/reserva/")
 public class ReservaController {
 
-@Autowired
-private ReservaService reservaService;
+    @Autowired
+    private ReservaService reservaService;
 
     @PostMapping("realizarReserva")
-    public ResponseEntity<ReservaResponseDTO> realizarReserva(
-            @RequestBody ReservaDTO dto,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+    public ResponseEntity<ReservaResponseDTO> realizarReserva(@RequestBody ReservaDTO dto, @AuthenticationPrincipal UserDetails userDetails) {
+
         Reserva reserva = reservaService.ReservarAssento(dto, userDetails.getUsername());
         return ResponseEntity.ok(new ReservaResponseDTO(reserva));
     }
 
     @PostMapping("reservaGrupo")
-    public ResponseEntity<List<ReservaResponseDTO>> reservaGrupo(
-            @RequestBody ReservaGrupoDTO grupoDTO,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        List<Reserva> reservas = reservaService.reservaGrupo(
-                grupoDTO,
-                userDetails.getUsername()
-        );
+    public ResponseEntity<List<ReservaResponseDTO>> reservaGrupo(@RequestBody ReservaGrupoDTO grupoDTO, @AuthenticationPrincipal UserDetails userDetails) {
 
-        List<ReservaResponseDTO> resposta = reservas.stream()
-                .map(ReservaResponseDTO::new)
-                .toList();
-
-        return ResponseEntity.ok(resposta);
+        List<Reserva> reservas = reservaService.reservaGrupo(grupoDTO, userDetails.getUsername());
+        return ResponseEntity.ok(reservas.stream().map(ReservaResponseDTO::new).toList());
     }
 
-
     @PutMapping("{id}/cancelar")
-    public ResponseEntity<Reserva> cancelarReserva(
-            @PathVariable Integer id, @AuthenticationPrincipal UserDetails userDetails)
-    {
+    public ResponseEntity<ReservaResponseDTO> cancelarReserva(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDetails) {
+
         Reserva reserva = reservaService.cancelarReserva(id, userDetails.getUsername());
-        return ResponseEntity.ok(reserva);
+        return ResponseEntity.ok(new ReservaResponseDTO(reserva));
     }
 
     @PutMapping("grupo/{codigoGrupo}/cancelar")
-    public ResponseEntity<List<Reserva>> cancelarReservaGrupo(
-            @PathVariable String codigoGrupo,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        List<Reserva> reservas = reservaService.cancelarReservaGrupo(
-                codigoGrupo,
-                userDetails.getUsername()
-        );
+    public ResponseEntity<List<ReservaResponseDTO>> cancelarReservaGrupo(@PathVariable String codigoGrupo, @AuthenticationPrincipal UserDetails userDetails) {
 
-        return ResponseEntity.ok(reservas);
-    }
+        List<Reserva> reservas = reservaService.cancelarReservaGrupo(codigoGrupo, userDetails.getUsername());
 
+        return ResponseEntity.ok(reservas.stream().map(ReservaResponseDTO::new).toList());
     }
+}
