@@ -68,6 +68,7 @@ public class SalaService {
         sala.setEstado(salaDTO.estado());
         sala.setEquipamentosSala(salaDTO.equipamentosSala());
         sala.setDeletado(false);
+        sala.setRaioProximidade(salaDTO.raioProximidade() != null ? salaDTO.raioProximidade() : 5.0);
         return repository.save(sala);
     }
 
@@ -98,22 +99,48 @@ public class SalaService {
         repository.softDeleteByNome(nome);
     }
 
-    public void atualizarSalaPorId (Integer id , Sala sala){
+    @Transactional
+    public void atualizarSalaPorId(Integer id, Sala sala) {
 
         Sala salaEntity = repository.findByIdAndDeletadoFalse(id).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada.")
         );
 
-        Sala salaAtualizado = Sala.builder()
-                .nome(sala.getNome() != null ? sala.getNome() : salaEntity.getNome())
-                .capacidade(sala.getCapacidade() != null ? sala.getCapacidade() : salaEntity.getCapacidade())
-                .status(sala.getStatus() != null ? sala.getStatus() : salaEntity.getStatus())
-                .id(salaEntity.getId())
-                .local(sala.getLocal() != null ? sala.getLocal() : salaEntity.getLocal())
-                .deletado(false)
-                .build();
+        if (sala.getNome() != null)       salaEntity.setNome(sala.getNome());
+        if (sala.getStatus() != null)     salaEntity.setStatus(sala.getStatus());
+        if (sala.getLocal() != null)      salaEntity.setLocal(sala.getLocal());
+        if (sala.getCidade() != null)     salaEntity.setCidade(sala.getCidade());
+        if (sala.getEstado() != null)     salaEntity.setEstado(sala.getEstado());
 
-        repository.saveAndFlush(salaAtualizado);
+        if (sala.getCapacidade() != null && !sala.getCapacidade().equals(salaEntity.getCapacidade())) {
+            int capacidadeAtual = assentoRepository.findBySalaIdOrderByPosicao(id).size();
+            int novaCapacidade = sala.getCapacidade();
+
+            if (novaCapacidade <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "A capacidade da sala deve ser maior que 0.");
+            }
+
+            if (novaCapacidade > capacidadeAtual) {
+                // adiciona apenas os assentos que faltam, preservando os existentes
+                for (int c = capacidadeAtual + 1; c <= novaCapacidade; c++) {
+                    Assento assento = new Assento();
+                    assento.setPosicao(c);
+                    salaEntity.adicionarasseto(assento);
+                }
+            } else if (novaCapacidade < capacidadeAtual) {
+                // inativa os assentos excedentes em vez de deletar (preserva histórico)
+                List<Assento> todos = assentoRepository.findBySalaIdOrderByPosicao(id);
+                for (int i = novaCapacidade; i < capacidadeAtual; i++) {
+                    todos.get(i).setAtivo(false);
+                }
+                assentoRepository.saveAll(todos.subList(novaCapacidade, capacidadeAtual));
+            }
+
+            salaEntity.setCapacidade(novaCapacidade);
+        }
+
+        repository.save(salaEntity);
     }
 
     public List<AssentoReponseDTO> listarAssentosDaSala(Integer salaId) {

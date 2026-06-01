@@ -56,19 +56,21 @@ public class SalaController {
     }
 
     @PutMapping("AtualizarSala")
-    public ResponseEntity<String> atualizarSalaPorId(@RequestParam Integer id , @RequestBody SalaDTO salaDTO){
+    public ResponseEntity<String> atualizarSalaPorId(@RequestParam Integer id, @RequestBody SalaDTO salaDTO) {
 
         Sala sala = Sala.builder()
                 .nome(salaDTO.nome())
                 .capacidade(salaDTO.capacidade())
                 .local(salaDTO.local())
+                .cidade(salaDTO.cidade())
+                .estado(salaDTO.estado())
                 .status(salaDTO.statusSala())
+                .raioProximidade(salaDTO.raioProximidade())
                 .build();
 
-        salaService.atualizarSalaPorId(id , sala);
+        salaService.atualizarSalaPorId(id, sala);
 
         return ResponseEntity.ok("Sala atualizada com SUCESSO!");
-
     }
 
     @GetMapping("{id}/assentos")

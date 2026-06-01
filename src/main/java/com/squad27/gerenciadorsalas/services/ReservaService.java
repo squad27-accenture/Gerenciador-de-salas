@@ -79,7 +79,8 @@ public class ReservaService {
 
         List<Assento> alocados = alocacaoService.alocar(
                 assentosLivres, tiposPorPessoa,
-                dto.criterioProximidade() != null ? dto.criterioProximidade() : CriterioProximidade.NENHUM
+                dto.criterioProximidade() != null ? dto.criterioProximidade() : CriterioProximidade.NENHUM,
+                sala.getRaioProximidade()
         );
 
         Assento assentoEscolhido = alocados.get(0);
@@ -136,7 +137,8 @@ public class ReservaService {
 
         List<Assento> alocados = alocacaoService.alocar(
                 assentosLivres, tiposPorPessoa,
-                dto.criterioProximidade() != null ? dto.criterioProximidade() : CriterioProximidade.NENHUM
+                dto.criterioProximidade() != null ? dto.criterioProximidade() : CriterioProximidade.NENHUM,
+                sala.getRaioProximidade()
         );
 
         String codigoGrupo = UUID.randomUUID().toString();
