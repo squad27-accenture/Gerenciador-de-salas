@@ -50,8 +50,9 @@ public class ReservaController {
 
         return ResponseEntity.ok(reservas.stream().map(ReservaResponseDTO::new).toList());
     }
+
     @GetMapping("historico")
-    public ResponseEntity<List<Reserva>> historico(
+    public ResponseEntity<List<ReservaResponseDTO>> historico(
             @RequestParam(required = false) Integer usuarioId,
             @RequestParam(required = false) Integer salaId,
             @RequestParam(required = false) LocalDate dataInicio,
@@ -60,6 +61,9 @@ public class ReservaController {
     ) {
         return ResponseEntity.ok(
                 reservaService.buscarHistorico(usuarioId, salaId, dataInicio, dataFim)
+                        .stream()
+                        .map(ReservaResponseDTO::new)
+                        .toList()
         );
     }
 }

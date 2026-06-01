@@ -1,7 +1,7 @@
 package com.squad27.gerenciadorsalas.dto;
 
-import com.squad27.gerenciadorsalas.domain.EquipamentosSala;
-import com.squad27.gerenciadorsalas.domain.StatusSala;
+import com.squad27.gerenciadorsalas.enums.EquipamentosSala;
+import com.squad27.gerenciadorsalas.enums.StatusSala;
 
 import java.util.List;
 

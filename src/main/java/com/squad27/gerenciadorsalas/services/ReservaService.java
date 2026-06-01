@@ -2,7 +2,7 @@ package com.squad27.gerenciadorsalas.services;
 
 import com.squad27.gerenciadorsalas.domain.Reserva;
 import com.squad27.gerenciadorsalas.domain.Sala;
-import com.squad27.gerenciadorsalas.domain.StatusReserva;
+import com.squad27.gerenciadorsalas.enums.StatusReserva;
 import com.squad27.gerenciadorsalas.domain.Usuario;
 import com.squad27.gerenciadorsalas.dto.ReservaDTO;
 import com.squad27.gerenciadorsalas.dto.ReservaGrupoDTO;
@@ -28,18 +28,20 @@ public class ReservaService {
     private final SalaRepository salaRepository;
     private final AssentoRepository assentoRepository;
     private final NotificacaoEmailService notificacaoEmailService;
+    private final DisponibilidadeService disponibilidadeService;
 
     public ReservaService(
             ReservaRepository reservaRepository,
             UsuarioRepository usuarioRepository,
             SalaRepository salaRepository,
-            AssentoRepository assentoRepository, NotificacaoEmailService notificacaoEmailService
+            AssentoRepository assentoRepository, NotificacaoEmailService notificacaoEmailService, DisponibilidadeService disponibilidadeService
     ) {
         this.reservaRepository = reservaRepository;
         this.usuarioRepository = usuarioRepository;
         this.salaRepository = salaRepository;
         this.assentoRepository = assentoRepository;
         this.notificacaoEmailService = notificacaoEmailService;
+        this.disponibilidadeService = disponibilidadeService;
     }
 
     public Reserva ReservarAssento(ReservaDTO dto, String emailUsuario) {
@@ -49,6 +51,10 @@ public class ReservaService {
         Usuario usuario = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
 
         validarHorarios(dto.horarioInicio(), dto.horarioFim());
+        disponibilidadeService.validarDisponibilidade(
+                dto.salaId(), dto.dataReserva(),
+                dto.horarioInicio(), dto.horarioFim()
+        );
 
         assentoRepository.findBySalaIdAndPosicao(dto.salaId(), dto.posicaoAssento())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -91,6 +97,10 @@ public class ReservaService {
         Usuario usuario = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
 
         validarHorarios(dto.horarioInicio(), dto.horarioFim());
+        disponibilidadeService.validarDisponibilidade(
+                dto.salaId(), dto.dataReserva(),
+                dto.horarioInicio(), dto.horarioFim()
+        );
 
 
         for (Integer posicao : dto.posicoesAssentos()) {
@@ -227,6 +237,10 @@ public class ReservaService {
 
     public List<Reserva> buscarHistorico(Integer usuarioId, Integer salaId,
                                          LocalDate dataInicio, LocalDate dataFim) {
+        System.out.println(">>> Buscando histórico: usuarioId=" + usuarioId
+                + " salaId=" + salaId
+                + " dataInicio=" + dataInicio
+                + " dataFim=" + dataFim);
         return reservaRepository.buscarHistorico(usuarioId, salaId, dataInicio, dataFim);
     }
 }

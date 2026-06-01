@@ -1,4 +1,4 @@
-package com.squad27.gerenciadorsalas.domain;
+package com.squad27.gerenciadorsalas.enums;
 
 public enum EquipamentosAssento {
     COMPUTADOR,

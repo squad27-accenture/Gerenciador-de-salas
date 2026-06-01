@@ -1,8 +1,7 @@
 package com.squad27.gerenciadorsalas.repositories;
 
-import com.squad27.gerenciadorsalas.domain.Assento;
 import com.squad27.gerenciadorsalas.domain.Reserva;
-import com.squad27.gerenciadorsalas.domain.StatusReserva;
+import com.squad27.gerenciadorsalas.enums.StatusReserva;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
 
@@ -57,8 +55,8 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
         SELECT r FROM Reserva r
         WHERE (:usuarioId IS NULL OR r.usuario.id = :usuarioId)
         AND (:salaId IS NULL OR r.sala.id = :salaId)
-        AND (:dataInicio IS NULL OR r.dataReserva >= :dataInicio)
-        AND (:dataFim IS NULL OR r.dataReserva <= :dataFim)
+        AND (CAST(:dataInicio AS java.time.LocalDate) IS NULL OR r.dataReserva >= :dataInicio)
+        AND (CAST(:dataFim AS java.time.LocalDate) IS NULL OR r.dataReserva <= :dataFim)
         ORDER BY r.dataReserva DESC, r.horarioInicio DESC
         """)
     List<Reserva> buscarHistorico(

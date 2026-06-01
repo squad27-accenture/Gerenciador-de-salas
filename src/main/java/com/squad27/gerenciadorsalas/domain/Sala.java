@@ -1,5 +1,7 @@
 package com.squad27.gerenciadorsalas.domain;
 
+import com.squad27.gerenciadorsalas.enums.EquipamentosSala;
+import com.squad27.gerenciadorsalas.enums.StatusSala;
 import jakarta.persistence.*;
 import lombok.*;
 
