@@ -28,10 +28,24 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<Map<String, String>> handleResponseStatusException(ResponseStatusException ex) {
-        return ResponseEntity
-                .status(ex.getStatusCode())
-                .body(Map.of("erro", ex.getReason()));
+    public ResponseEntity<Map<String, Object>> handleResponseStatusException(ResponseStatusException ex) {
+        Map<String, Object> corpo = new HashMap<>();
+        corpo.put("status", ex.getStatusCode().value());
+        corpo.put("erro", ex.getReason());
+        corpo.put("codigo", resolverCodigo(ex.getReason()));
+        return ResponseEntity.status(ex.getStatusCode()).body(corpo);
+    }
+
+    private String resolverCodigo(String motivo) {
+        if (motivo == null) return "ERRO_DESCONHECIDO";
+        if (motivo.contains("já está reservado"))       return "ASSENTO_OCUPADO";
+        if (motivo.contains("proximidade OBRIGATÓRIA")) return "PROXIMIDADE_INSUFICIENTE";
+        if (motivo.contains("tipos preferidos"))        return "TIPO_ASSENTO_INDISPONIVEL";
+        if (motivo.contains("assentos disponíveis"))    return "SEM_ASSENTOS_LIVRES";
+        if (motivo.contains("disponível neste horário")) return "SALA_INDISPONIVEL_HORARIO";
+        if (motivo.contains("data bloqueada"))          return "DATA_BLOQUEADA";
+        if (motivo.contains("horário inicial"))         return "HORARIO_INVALIDO";
+        return "REJEICAO_RESERVA";
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

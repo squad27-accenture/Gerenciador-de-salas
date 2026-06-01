@@ -13,7 +13,8 @@ public record ReservaResponseDTO(Integer id,
                                  String statusReserva,
                                  String codigoGrupo,
                                  Integer salaId,
-                                 String nomeSala) {
+                                 String nomeSala,
+                                 String motivoCancelamento) {
     public ReservaResponseDTO(Reserva reserva) {
         this(
                 reserva.getId(),
@@ -24,6 +25,8 @@ public record ReservaResponseDTO(Integer id,
                 reserva.getStatusReserva().name(),
                 reserva.getCodigoGrupo(),
                 reserva.getSala().getId(),
-                reserva.getSala().getNome()
-        );}
+                reserva.getSala().getNome(),
+                reserva.getMotivoCancelamento()
+        );
+    }
 }
