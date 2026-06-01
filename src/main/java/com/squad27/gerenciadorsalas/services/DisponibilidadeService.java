@@ -33,22 +33,28 @@ public class DisponibilidadeService {
         this.salaRepository = salaRepository;
     }
 
-    public DisponibilidadeResponseDTO configurarDisponibilidade(Integer salaId, DisponibilidadeDTO dto) {
+    public List<DisponibilidadeResponseDTO> configurarDisponibilidade(Integer salaId, DisponibilidadeDTO dto) {
         Sala sala = salaRepository.findById(salaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada"));
 
-        DisponibilidadeSala disponibilidade = disponibilidadeRepository
-                .findBySalaIdAndDiaSemana(salaId, dto.diaSemana())
-                .orElse(new DisponibilidadeSala());
+        List<DiaSemana> dias = dto.diasSemana() != null && !dto.diasSemana().isEmpty()
+                ? dto.diasSemana()
+                : List.of(DiaSemana.values()); // se não informar, configura todos os dias
 
-        disponibilidade.setSala(sala);
-        disponibilidade.setDiaSemana(dto.diaSemana());
-        disponibilidade.setAceitaReservas(dto.aceitaReservas());
-        disponibilidade.setHorarioAbertura(dto.horarioAbertura());
-        disponibilidade.setHorarioFechamento(dto.horarioFechamento());
-        disponibilidade.setAntecedenciaMinimaDias(dto.antecedenciaMinimaDias());
+        return dias.stream().map(dia -> {
+            DisponibilidadeSala disponibilidade = disponibilidadeRepository
+                    .findBySalaIdAndDiaSemana(salaId, dia)
+                    .orElse(new DisponibilidadeSala());
 
-        return new DisponibilidadeResponseDTO(disponibilidadeRepository.save(disponibilidade));
+            disponibilidade.setSala(sala);
+            disponibilidade.setDiaSemana(dia);
+            disponibilidade.setAceitaReservas(dto.aceitaReservas());
+            disponibilidade.setHorarioAbertura(dto.horarioAbertura());
+            disponibilidade.setHorarioFechamento(dto.horarioFechamento());
+            disponibilidade.setAntecedenciaMinimaDias(dto.antecedenciaMinimaDias());
+
+            return new DisponibilidadeResponseDTO(disponibilidadeRepository.save(disponibilidade));
+        }).toList();
     }
 
     public List<DisponibilidadeResponseDTO> listarDisponibilidade(Integer salaId) {

@@ -1,11 +1,15 @@
 package com.squad27.gerenciadorsalas.services;
 
+import com.squad27.gerenciadorsalas.domain.Assento;
 import com.squad27.gerenciadorsalas.domain.Reserva;
 import com.squad27.gerenciadorsalas.domain.Sala;
+import com.squad27.gerenciadorsalas.dto.OcupacaoResponseDTO;
+import com.squad27.gerenciadorsalas.enums.CriterioProximidade;
 import com.squad27.gerenciadorsalas.enums.StatusReserva;
 import com.squad27.gerenciadorsalas.domain.Usuario;
 import com.squad27.gerenciadorsalas.dto.ReservaDTO;
 import com.squad27.gerenciadorsalas.dto.ReservaGrupoDTO;
+import com.squad27.gerenciadorsalas.enums.TipoAssento;
 import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
 import com.squad27.gerenciadorsalas.repositories.ReservaRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
@@ -29,12 +33,13 @@ public class ReservaService {
     private final AssentoRepository assentoRepository;
     private final NotificacaoEmailService notificacaoEmailService;
     private final DisponibilidadeService disponibilidadeService;
+    private final AlocacaoService alocacaoService;
 
     public ReservaService(
             ReservaRepository reservaRepository,
             UsuarioRepository usuarioRepository,
             SalaRepository salaRepository,
-            AssentoRepository assentoRepository, NotificacaoEmailService notificacaoEmailService, DisponibilidadeService disponibilidadeService
+            AssentoRepository assentoRepository, NotificacaoEmailService notificacaoEmailService, DisponibilidadeService disponibilidadeService, AlocacaoService alocacaoService
     ) {
         this.reservaRepository = reservaRepository;
         this.usuarioRepository = usuarioRepository;
@@ -42,6 +47,7 @@ public class ReservaService {
         this.assentoRepository = assentoRepository;
         this.notificacaoEmailService = notificacaoEmailService;
         this.disponibilidadeService = disponibilidadeService;
+        this.alocacaoService = alocacaoService;
     }
 
     public Reserva ReservarAssento(ReservaDTO dto, String emailUsuario) {
@@ -56,13 +62,28 @@ public class ReservaService {
                 dto.horarioInicio(), dto.horarioFim()
         );
 
-        assentoRepository.findBySalaIdAndPosicao(dto.salaId(), dto.posicaoAssento())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Assento não encontrado nessa sala."
-                ));
+        // Busca assentos livres na sala para o horário solicitado
+        List<Integer> posicoesOcupadas = reservaRepository.buscarPosicoesOcupadas(
+                dto.salaId(), dto.dataReserva(),
+                dto.horarioInicio(), dto.horarioFim(), StatusReserva.CANCELADA
+        );
+        List<Assento> assentosLivres = assentoRepository.findBySalaIdOrderByPosicao(dto.salaId())
+                .stream()
+                .filter(a -> Boolean.TRUE.equals(a.getAtivo()))
+                .filter(a -> !posicoesOcupadas.contains(a.getPosicao()))
+                .toList();
 
-        validarConflito(dto.salaId(), dto.posicaoAssento(), dto.dataReserva(),
+        // Monta lista de tipos preferidos (pessoa única)
+        List<List<TipoAssento>> tiposPorPessoa = new ArrayList<>();
+        tiposPorPessoa.add(dto.tiposPreferidosPessoa1() != null ? dto.tiposPreferidosPessoa1() : List.of());
+
+        List<Assento> alocados = alocacaoService.alocar(
+                assentosLivres, tiposPorPessoa,
+                dto.criterioProximidade() != null ? dto.criterioProximidade() : CriterioProximidade.NENHUM
+        );
+
+        Assento assentoEscolhido = alocados.get(0);
+        validarConflito(dto.salaId(), assentoEscolhido.getPosicao(), dto.dataReserva(),
                 dto.horarioInicio(), dto.horarioFim());
 
         Reserva reserva = new Reserva();
@@ -72,22 +93,18 @@ public class ReservaService {
         reserva.setSala(sala);
         reserva.setUsuario(usuario);
         reserva.setStatusReserva(StatusReserva.EmANDAMENTO);
-        reserva.setPosicaoAssento(dto.posicaoAssento());
+        reserva.setPosicaoAssento(assentoEscolhido.getPosicao());
 
         Reserva salva = reservaRepository.save(reserva);
 
         notificacaoEmailService.enviarConfirmacaoReserva(
-                usuario.getEmail(),
-                usuario.getUsername(),
-                sala.getNome(),
-                dto.dataReserva().toString(),
-                dto.horarioInicio().toString(),
-                dto.horarioFim().toString(),
-                dto.posicaoAssento()
+                usuario.getEmail(), usuario.getUsername(),
+                sala.getNome(), dto.dataReserva().toString(),
+                dto.horarioInicio().toString(), dto.horarioFim().toString(),
+                assentoEscolhido.getPosicao()
         );
 
         return salva;
-
     }
 
     public List<Reserva> reservaGrupo(ReservaGrupoDTO dto, String emailUsuario) {
@@ -102,21 +119,33 @@ public class ReservaService {
                 dto.horarioInicio(), dto.horarioFim()
         );
 
+        // Busca assentos livres
+        List<Integer> posicoesOcupadas = reservaRepository.buscarPosicoesOcupadas(
+                dto.salaId(), dto.dataReserva(),
+                dto.horarioInicio(), dto.horarioFim(), StatusReserva.CANCELADA
+        );
+        List<Assento> assentosLivres = assentoRepository.findBySalaIdOrderByPosicao(dto.salaId())
+                .stream()
+                .filter(a -> Boolean.TRUE.equals(a.getAtivo()))
+                .filter(a -> !posicoesOcupadas.contains(a.getPosicao()))
+                .toList();
 
-        for (Integer posicao : dto.posicoesAssentos()) {
-            assentoRepository.findBySalaIdAndPosicao(dto.salaId(), posicao)
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Assento " + posicao + " não encontrado nessa sala."
-                    ));
-            validarConflito(dto.salaId(), posicao, dto.dataReserva(),
-                    dto.horarioInicio(), dto.horarioFim());
-        }
+        List<List<TipoAssento>> tiposPorPessoa = dto.tiposPreferidosPorPessoa() != null
+                ? dto.tiposPreferidosPorPessoa()
+                : List.of();
+
+        List<Assento> alocados = alocacaoService.alocar(
+                assentosLivres, tiposPorPessoa,
+                dto.criterioProximidade() != null ? dto.criterioProximidade() : CriterioProximidade.NENHUM
+        );
 
         String codigoGrupo = UUID.randomUUID().toString();
         List<Reserva> reservas = new ArrayList<>();
 
-        for (Integer posicao : dto.posicoesAssentos()) {
+        for (Assento assento : alocados) {
+            validarConflito(dto.salaId(), assento.getPosicao(), dto.dataReserva(),
+                    dto.horarioInicio(), dto.horarioFim());
+
             Reserva reserva = new Reserva();
             reserva.setHorarioInicio(dto.horarioInicio());
             reserva.setHorarioFim(dto.horarioFim());
@@ -124,7 +153,7 @@ public class ReservaService {
             reserva.setSala(sala);
             reserva.setUsuario(usuario);
             reserva.setStatusReserva(StatusReserva.EmANDAMENTO);
-            reserva.setPosicaoAssento(posicao);
+            reserva.setPosicaoAssento(assento.getPosicao());
             reserva.setCodigoGrupo(codigoGrupo);
             reservas.add(reserva);
         }
@@ -132,13 +161,10 @@ public class ReservaService {
         List<Reserva> salvas = reservaRepository.saveAll(reservas);
 
         notificacaoEmailService.enviarConfirmacaoReservaGrupo(
-                usuario.getEmail(),
-                usuario.getUsername(),
-                sala.getNome(),
-                dto.dataReserva().toString(),
-                dto.horarioInicio().toString(),
-                dto.horarioFim().toString(),
-                dto.posicoesAssentos()
+                usuario.getEmail(), usuario.getUsername(),
+                sala.getNome(), dto.dataReserva().toString(),
+                dto.horarioInicio().toString(), dto.horarioFim().toString(),
+                alocados.stream().map(Assento::getPosicao).toList()
         );
 
         return salvas;
@@ -242,5 +268,31 @@ public class ReservaService {
                 + " dataInicio=" + dataInicio
                 + " dataFim=" + dataFim);
         return reservaRepository.buscarHistorico(usuarioId, salaId, dataInicio, dataFim);
+    }
+
+    public OcupacaoResponseDTO relatórioOcupacao(Integer salaId, LocalDate dataInicio, LocalDate dataFim) {
+        Sala sala = salaRepository.findById(salaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
+
+        long totalReservas = reservaRepository.contarReservasPorSalaEPeriodo(
+                salaId, dataInicio, dataFim, StatusReserva.CANCELADA
+        );
+
+        int totalAssentos = sala.getAssentos().size();
+        long diasNoPeriodo = dataInicio.datesUntil(dataFim.plusDays(1)).count();
+        long capacidadeTotal = (long) totalAssentos * diasNoPeriodo;
+
+        double taxa = capacidadeTotal == 0 ? 0.0
+                : Math.round(((double) totalReservas / capacidadeTotal) * 10000.0) / 100.0;
+
+        return new OcupacaoResponseDTO(
+                salaId,
+                sala.getNome(),
+                dataInicio,
+                dataFim,
+                (int) totalReservas,
+                totalAssentos,
+                taxa
+        );
     }
 }

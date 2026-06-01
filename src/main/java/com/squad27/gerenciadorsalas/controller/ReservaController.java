@@ -1,6 +1,7 @@
 package com.squad27.gerenciadorsalas.controller;
 
 import com.squad27.gerenciadorsalas.domain.Reserva;
+import com.squad27.gerenciadorsalas.dto.OcupacaoResponseDTO;
 import com.squad27.gerenciadorsalas.dto.ReservaDTO;
 import com.squad27.gerenciadorsalas.dto.ReservaGrupoDTO;
 import com.squad27.gerenciadorsalas.dto.ReservaResponseDTO;
@@ -65,5 +66,14 @@ public class ReservaController {
                         .map(ReservaResponseDTO::new)
                         .toList()
         );
+    }
+
+    @GetMapping("ocupacao")
+    public ResponseEntity<OcupacaoResponseDTO> relatorioOcupacao(
+            @RequestParam Integer salaId,
+            @RequestParam LocalDate dataInicio,
+            @RequestParam LocalDate dataFim
+    ) {
+        return ResponseEntity.ok(reservaService.relatórioOcupacao(salaId, dataInicio, dataFim));
     }
 }

@@ -65,4 +65,19 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
             @Param("dataInicio") LocalDate dataInicio,
             @Param("dataFim") LocalDate dataFim
     );
+
+    @Query("""
+    SELECT COUNT(r)
+    FROM Reserva r
+    WHERE r.sala.id = :salaId
+    AND r.dataReserva >= :dataInicio
+    AND r.dataReserva <= :dataFim
+    AND r.statusReserva <> :statusCancelada
+""")
+    long contarReservasPorSalaEPeriodo(
+            @Param("salaId") Integer salaId,
+            @Param("dataInicio") LocalDate dataInicio,
+            @Param("dataFim") LocalDate dataFim,
+            @Param("statusCancelada") StatusReserva statusCancelada
+    );
 }
