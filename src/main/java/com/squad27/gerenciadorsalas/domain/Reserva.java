@@ -42,6 +42,9 @@ public class Reserva{
     @Column(name = "codigo_grupo")
     private String codigoGrupo;
 
+    @Column(name = "motivo_cancelamento", length = 500)
+    private String motivoCancelamento;
+
     @ManyToOne
     @JoinColumn(name = "sala_id")
     private Sala sala;

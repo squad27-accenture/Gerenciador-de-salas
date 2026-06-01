@@ -38,17 +38,22 @@ public class ReservaController {
     }
 
     @PutMapping("{id}/cancelar")
-    public ResponseEntity<ReservaResponseDTO> cancelarReserva(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ReservaResponseDTO> cancelarReserva(
+            @PathVariable Integer id,
+            @RequestParam(required = false) String motivo,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        Reserva reserva = reservaService.cancelarReserva(id, userDetails.getUsername());
+        Reserva reserva = reservaService.cancelarReserva(id, userDetails.getUsername(), motivo);
         return ResponseEntity.ok(new ReservaResponseDTO(reserva));
     }
 
     @PutMapping("grupo/{codigoGrupo}/cancelar")
-    public ResponseEntity<List<ReservaResponseDTO>> cancelarReservaGrupo(@PathVariable String codigoGrupo, @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<ReservaResponseDTO>> cancelarReservaGrupo(
+            @PathVariable String codigoGrupo,
+            @RequestParam(required = false) String motivo,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        List<Reserva> reservas = reservaService.cancelarReservaGrupo(codigoGrupo, userDetails.getUsername());
-
+        List<Reserva> reservas = reservaService.cancelarReservaGrupo(codigoGrupo, userDetails.getUsername(), motivo);
         return ResponseEntity.ok(reservas.stream().map(ReservaResponseDTO::new).toList());
     }
 

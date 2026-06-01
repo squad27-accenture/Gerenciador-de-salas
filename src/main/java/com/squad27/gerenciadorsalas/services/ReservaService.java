@@ -170,7 +170,7 @@ public class ReservaService {
         return salvas;
     }
 
-    public Reserva cancelarReserva(Integer reservaId, String emailUsuario) {
+    public Reserva cancelarReserva(Integer reservaId, String emailUsuario, String motivo) {
         Reserva reserva = reservaRepository.findById(reservaId)
                 .orElseThrow(() -> new RuntimeException("Reserva não encontrada"));
 
@@ -179,6 +179,7 @@ public class ReservaService {
         }
 
         reserva.setStatusReserva(StatusReserva.CANCELADA);
+        reserva.setMotivoCancelamento(motivo);
 
         Reserva salva = reservaRepository.save(reserva);
 
@@ -195,7 +196,7 @@ public class ReservaService {
         return salva;
     }
 
-    public List<Reserva> cancelarReservaGrupo(String codigoGrupo, String emailUsuario) {
+    public List<Reserva> cancelarReservaGrupo(String codigoGrupo, String emailUsuario, String motivo) {
         List<Reserva> reservas = reservaRepository.findByCodigoGrupo(codigoGrupo);
 
         if (reservas.isEmpty()) {
@@ -207,14 +208,13 @@ public class ReservaService {
                 throw new RuntimeException("Você não pode cancelar uma reserva de outro usuário");
             }
             reserva.setStatusReserva(StatusReserva.CANCELADA);
+            reserva.setMotivoCancelamento(motivo);
         }
 
         List<Reserva> salvas = reservaRepository.saveAll(reservas);
 
         Reserva primeira = salvas.get(0);
-        List<Integer> posicoes = salvas.stream()
-                .map(Reserva::getPosicaoAssento)
-                .toList();
+        List<Integer> posicoes = salvas.stream().map(Reserva::getPosicaoAssento).toList();
 
         notificacaoEmailService.enviarCancelamentoReservaGrupo(
                 primeira.getUsuario().getEmail(),
