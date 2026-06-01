@@ -122,7 +122,14 @@ public class SalaService {
                 .map(assento -> new AssentoReponseDTO(
                         assento.getId(),
                         assento.getPosicao(),
-                        assento.getEquipamentoAssento() == null ? null : assento.getEquipamentoAssento().name()
+                        assento.getTipoAssento() == null ? null : assento.getTipoAssento().name(),
+                        assento.getCoordenadaX(),
+                        assento.getCoordenadaY(),
+                        assento.getAtivo(),
+                        assento.getEquipamentos()
+                                .stream()
+                                .map(Enum::name)
+                                .toList()
                 ))
                 .toList();
     }

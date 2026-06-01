@@ -19,7 +19,7 @@ public class DisponibilidadeController {
     }
 
     @PostMapping
-    public ResponseEntity<DisponibilidadeResponseDTO> configurar(
+    public ResponseEntity<List<DisponibilidadeResponseDTO>> configurar(
             @PathVariable Integer salaId,
             @RequestBody DisponibilidadeDTO dto
     ) {

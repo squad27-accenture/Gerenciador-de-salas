@@ -5,24 +5,24 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.squad27.gerenciadorsalas.domain.*;
 import com.squad27.gerenciadorsalas.dto.ReservaDTO;
 import com.squad27.gerenciadorsalas.dto.ReservaGrupoDTO;
+import com.squad27.gerenciadorsalas.enums.CriterioProximidade;
+import com.squad27.gerenciadorsalas.enums.DiaSemana;
 import com.squad27.gerenciadorsalas.enums.Role;
 import com.squad27.gerenciadorsalas.enums.StatusReserva;
 import com.squad27.gerenciadorsalas.enums.StatusSala;
-import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
-import com.squad27.gerenciadorsalas.repositories.ReservaRepository;
-import com.squad27.gerenciadorsalas.repositories.SalaRepository;
-import com.squad27.gerenciadorsalas.repositories.UsuarioRepository;
+import com.squad27.gerenciadorsalas.repositories.*;
 import com.squad27.gerenciadorsalas.security.TokenService;
+import com.squad27.gerenciadorsalas.services.NotificacaoEmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -32,26 +32,22 @@ import java.util.List;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 @SpringBootTest
 @org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-
 public class ReservaIntegrationTest {
-    @Autowired
-    MockMvc mockMvc;
-    @Autowired
-    ReservaRepository reservaRepository;
-    @Autowired
-    SalaRepository salaRepository;
-    @Autowired
-    AssentoRepository assentoRepository;
-    @Autowired
-    UsuarioRepository usuarioRepository;
-    @Autowired
-    TokenService tokenService;
-    @Autowired
-    PasswordEncoder passwordEncoder;
+
+    @Autowired MockMvc mockMvc;
+    @Autowired ReservaRepository reservaRepository;
+    @Autowired SalaRepository salaRepository;
+    @Autowired AssentoRepository assentoRepository;
+    @Autowired UsuarioRepository usuarioRepository;
+    @Autowired TokenService tokenService;
+    @Autowired PasswordEncoder passwordEncoder;
+    @Autowired DisponibilidadeSalaRepository disponibilidadeSalaRepository;
+    @MockitoBean NotificacaoEmailService notificacaoEmailService;
 
     ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
@@ -75,8 +71,19 @@ public class ReservaIntegrationTest {
         sala.setStatus(StatusSala.DISPONIVEL);
         sala = salaRepository.save(sala);
 
-        Assento a1 = new Assento(); a1.setSala(sala); a1.setPosicao(1);
-        Assento a2 = new Assento(); a2.setSala(sala); a2.setPosicao(2);
+        for (DiaSemana dia : DiaSemana.values()) {
+            DisponibilidadeSala disp = new DisponibilidadeSala();
+            disp.setSala(sala);
+            disp.setDiaSemana(dia);
+            disp.setAceitaReservas(true);
+            disp.setHorarioAbertura(LocalTime.of(7, 0));
+            disp.setHorarioFechamento(LocalTime.of(22, 0));
+            disp.setAntecedenciaMinimaDias(0);
+            disponibilidadeSalaRepository.save(disp);
+        }
+
+        Assento a1 = new Assento(); a1.setSala(sala); a1.setPosicao(1); a1.setAtivo(true);
+        Assento a2 = new Assento(); a2.setSala(sala); a2.setPosicao(2); a2.setAtivo(true);
         assentoRepository.saveAll(List.of(a1, a2));
 
         usuario = new Usuario("user@teste.com", passwordEncoder.encode("senha"), Role.USER, "User Teste");
@@ -94,14 +101,13 @@ public class ReservaIntegrationTest {
     @Test
     @DisplayName("Reserva individual: sucesso")
     void reservaIndividual_sucesso() throws Exception {
-        ReservaDTO dto = new ReservaDTO(H9, H10, AMANHA, 1, sala.getId());
+        ReservaDTO dto = dtoPessoa(H9, H10, AMANHA, sala.getId());
 
         mockMvc.perform(post("/api/v1/reserva/realizarReserva")
                         .header("Authorization", tokenUsuario)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.posicaoAssento").value(1))
                 .andExpect(jsonPath("$.statusReserva").value("EmANDAMENTO"))
                 .andExpect(jsonPath("$.salaId").value(sala.getId()));
     }
@@ -110,8 +116,9 @@ public class ReservaIntegrationTest {
     @DisplayName("Reserva individual: conflito exato de horário → 409")
     void reservaIndividual_conflitoExato() throws Exception {
         reservaExistente(1, AMANHA, H9, H10);
+        reservaExistente(2, AMANHA, H9, H10);
 
-        ReservaDTO dto = new ReservaDTO(H9, H10, AMANHA, 1, sala.getId());
+        ReservaDTO dto = dtoPessoa(H9, H10, AMANHA, sala.getId());
 
         mockMvc.perform(post("/api/v1/reserva/realizarReserva")
                         .header("Authorization", tokenUsuario)
@@ -124,8 +131,9 @@ public class ReservaIntegrationTest {
     @DisplayName("Reserva individual: sobreposição parcial de horário → 409")
     void reservaIndividual_conflitoSobreposicao() throws Exception {
         reservaExistente(1, AMANHA, H9, H11);
+        reservaExistente(2, AMANHA, H9, H11);
 
-        ReservaDTO dto = new ReservaDTO(H10, H11, AMANHA, 1, sala.getId());
+        ReservaDTO dto = dtoPessoa(H10, H11, AMANHA, sala.getId());
 
         mockMvc.perform(post("/api/v1/reserva/realizarReserva")
                         .header("Authorization", tokenUsuario)
@@ -137,13 +145,17 @@ public class ReservaIntegrationTest {
     @Test
     @DisplayName("Reserva individual: assentos diferentes no mesmo horário não conflitam")
     void reservaIndividual_assentosDiferentesNaoConflitam() throws Exception {
-        reservaExistente(1, AMANHA, H9, H10);
+        ReservaDTO dto1 = dtoPessoa(H9, H10, AMANHA, sala.getId());
+        mockMvc.perform(post("/api/v1/reserva/realizarReserva")
+                        .header("Authorization", tokenUsuario)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto1)))
+                .andExpect(status().isOk());
 
-        ReservaDTO dto = new ReservaDTO(H9, H10, AMANHA, 2, sala.getId());
-
+        ReservaDTO dto2 = dtoPessoa(H9, H10, AMANHA, sala.getId());
         mockMvc.perform(post("/api/v1/reserva/realizarReserva")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto))
+                        .content(mapper.writeValueAsString(dto2))
                         .header("Authorization", tokenUsuario))
                 .andExpect(status().isOk());
     }
@@ -152,11 +164,12 @@ public class ReservaIntegrationTest {
     @DisplayName("Reserva individual: slot de reserva cancelada fica disponível")
     void reservaIndividual_canceladaLiberaSlot() throws Exception {
         Reserva cancelada = reservaExistente(1, AMANHA, H9, H10);
+        reservaExistente(2, AMANHA, H9, H10);
+
         cancelada.setStatusReserva(StatusReserva.CANCELADA);
         reservaRepository.save(cancelada);
 
-        ReservaDTO dto = new ReservaDTO(H9, H10, AMANHA, 1, sala.getId());
-
+        ReservaDTO dto = dtoPessoa(H9, H10, AMANHA, sala.getId());
         mockMvc.perform(post("/api/v1/reserva/realizarReserva")
                         .header("Authorization", tokenUsuario)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -167,7 +180,7 @@ public class ReservaIntegrationTest {
     @Test
     @DisplayName("Reserva individual: horário início >= fim → 400")
     void reservaIndividual_horarioInvalido() throws Exception {
-        ReservaDTO dto = new ReservaDTO(H10, H9, AMANHA, 1, sala.getId());
+        ReservaDTO dto = dtoPessoa(H10, H9, AMANHA, sala.getId());
 
         mockMvc.perform(post("/api/v1/reserva/realizarReserva")
                         .header("Authorization", tokenUsuario)
@@ -177,21 +190,9 @@ public class ReservaIntegrationTest {
     }
 
     @Test
-    @DisplayName("Reserva individual: assento inexistente → 404")
-    void reservaIndividual_assentoInexistente() throws Exception {
-        ReservaDTO dto = new ReservaDTO(H9, H10, AMANHA, 99, sala.getId());
-
-        mockMvc.perform(post("/api/v1/reserva/realizarReserva")
-                        .header("Authorization", tokenUsuario)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto)))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
     @DisplayName("Reserva individual: sem token → 401")
     void reservaIndividual_semAutenticacao() throws Exception {
-        ReservaDTO dto = new ReservaDTO(H9, H10, AMANHA, 1, sala.getId());
+        ReservaDTO dto = dtoPessoa(H9, H10, AMANHA, sala.getId());
 
         mockMvc.perform(post("/api/v1/reserva/realizarReserva")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -204,7 +205,8 @@ public class ReservaIntegrationTest {
     @Test
     @DisplayName("Reserva em grupo: sucesso — retorna lista com mesmo codigoGrupo")
     void reservaGrupo_sucesso() throws Exception {
-        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H10, AMANHA, sala.getId(), List.of(1, 2));
+        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H10, AMANHA, sala.getId(),
+                List.of(List.of(), List.of()), CriterioProximidade.NENHUM);
 
         String responseJson = mockMvc.perform(post("/api/v1/reserva/reservaGrupo")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -224,27 +226,17 @@ public class ReservaIntegrationTest {
     @Test
     @DisplayName("Reserva em grupo: conflito em qualquer assento → 409")
     void reservaGrupo_conflito() throws Exception {
+        reservaExistente(1, AMANHA, H9, H10);
         reservaExistente(2, AMANHA, H9, H10);
 
-        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H10, AMANHA, sala.getId(), List.of(1, 2));
+        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H10, AMANHA, sala.getId(),
+                List.of(List.of(), List.of()), CriterioProximidade.NENHUM);
 
         mockMvc.perform(post("/api/v1/reserva/reservaGrupo")
                         .header("Authorization", tokenUsuario)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(dto)))
                 .andExpect(status().isConflict());
-    }
-
-    @Test
-    @DisplayName("Reserva em grupo: assento inexistente → 404")
-    void reservaGrupo_assentoInexistente() throws Exception {
-        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H10, AMANHA, sala.getId(), List.of(1, 99));
-
-        mockMvc.perform(post("/api/v1/reserva/reservaGrupo")
-                        .header("Authorization", tokenUsuario)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(dto)))
-                .andExpect(status().isNotFound());
     }
 
     // ── CANCELAMENTO INDIVIDUAL ───────────────────────────────────────
@@ -316,6 +308,10 @@ public class ReservaIntegrationTest {
 
     // ── HELPERS ──────────────────────────────────────────────────────
 
+    private ReservaDTO dtoPessoa(LocalTime inicio, LocalTime fim, LocalDate data, Integer salaId) {
+        return new ReservaDTO(inicio, fim, data, salaId, List.of(), null, null, 1, CriterioProximidade.NENHUM);
+    }
+
     private Reserva reservaExistente(int posicao, LocalDate data, LocalTime inicio, LocalTime fim) {
         Reserva r = new Reserva();
         r.setSala(sala); r.setUsuario(usuario);
@@ -336,4 +332,3 @@ public class ReservaIntegrationTest {
         return reservaRepository.save(r);
     }
 }
-

@@ -25,6 +25,8 @@ public class SecurityConfig {
 
     @Autowired
     SecurityFilter securityFilter;
+    @Autowired
+    RateLimitFilter rateLimitFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -81,8 +83,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/salas/*/disponibilidade/bloqueadas").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/salas/*/disponibilidade").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/salas/*/disponibilidade/bloqueadas").authenticated()
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

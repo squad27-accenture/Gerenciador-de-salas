@@ -18,13 +18,13 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken criarRefreshToken(Usuario usuario) {
-        // Remove o token anterior se existir
         refreshTokenRepository.deleteByUsuario(usuario);
+        refreshTokenRepository.flush(); // força o DELETE ir pro banco antes do INSERT
 
         RefreshToken refreshToken = RefreshToken.builder()
                 .usuario(usuario)
                 .token(UUID.randomUUID().toString())
-                .expiracao(Instant.now().plusSeconds(604800)) // 7 dias
+                .expiracao(Instant.now().plusSeconds(604800))
                 .revogado(false)
                 .build();
 
