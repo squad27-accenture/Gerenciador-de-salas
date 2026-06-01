@@ -1,16 +1,17 @@
 package com.squad27.gerenciadorsalas.domain;
 
-import com.squad27.gerenciadorsalas.enums.EquipamentosAssento;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDate;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity(name = "Assento")
-@Table(name = "assentos")
-public class Assento {
+@Entity
+@Table(name = "datas_bloqueadas")
+public class DataBloqueada {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,9 +21,7 @@ public class Assento {
     @JoinColumn(name = "sala_id")
     private Sala sala;
 
-    private int posicao;
+    private LocalDate data;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "equipamento_assento")
-    private EquipamentosAssento equipamentoAssento;
+    private String motivo;
 }

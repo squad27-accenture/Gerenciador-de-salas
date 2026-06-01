@@ -1,5 +1,6 @@
 package com.squad27.gerenciadorsalas.domain;
 
+import com.squad27.gerenciadorsalas.enums.StatusReserva;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

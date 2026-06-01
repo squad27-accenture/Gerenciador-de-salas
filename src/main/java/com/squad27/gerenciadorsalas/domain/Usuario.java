@@ -1,5 +1,6 @@
 package com.squad27.gerenciadorsalas.domain;
 
+import com.squad27.gerenciadorsalas.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;

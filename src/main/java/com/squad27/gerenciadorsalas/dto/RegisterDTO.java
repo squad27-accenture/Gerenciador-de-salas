@@ -1,6 +1,6 @@
 package com.squad27.gerenciadorsalas.dto;
 
-import com.squad27.gerenciadorsalas.domain.Role;
+import com.squad27.gerenciadorsalas.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
