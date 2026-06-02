@@ -6,8 +6,11 @@ import com.squad27.gerenciadorsalas.dto.UsuarioDTO;
 import com.squad27.gerenciadorsalas.dto.UsuarioResponseDTO;
 import com.squad27.gerenciadorsalas.repositories.UsuarioRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -21,23 +24,20 @@ public class UsuarioService {
 
 
     public List<Usuario> listarUsuarios(){
-
-        return usuarioRepository.findAll();
+        return usuarioRepository.findAllByDeletadoFalse();
     }
 
-   public UsuarioResponseDTO buscarMeuPerfilPorId(Integer id){
+    public UsuarioResponseDTO buscarMeuPerfilPorId(Integer id){
+        Usuario usuario = usuarioRepository.findByIdAndDeletadoFalse(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-       Usuario usuario = usuarioRepository.findById(id)
-               .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-       // Retorna apenas os dados seguros
-       return new UsuarioResponseDTO(
-               usuario.getId(),
-               usuario.getUsername(),
-               usuario.getEmail(),
-               usuario.getRole()
-       );
-   }
+        return new UsuarioResponseDTO(
+                usuario.getId(),
+                usuario.getUsername(),
+                usuario.getEmail(),
+                usuario.getRole()
+        );
+    }
 
     public UsuarioResponseDTO buscarMeuPerfilPorEmail(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
@@ -51,16 +51,19 @@ public class UsuarioService {
         );
     }
 
+    @Transactional
     public void deletarUsuarioPorId(Integer id){
-
-        usuarioRepository.deleteById(id);
-
+        if (!usuarioRepository.findByIdAndDeletadoFalse(id).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado.");
+        }
+        usuarioRepository.softDeleteById(id);
     }
+
+    @Transactional
     public void deletarUsuarioAutenticado(String email) {
-
-        Usuario usuarioEntity = usuarioRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Usuario nao encontrado"));
-
-        usuarioRepository.deleteById(usuarioEntity.getId());
+        usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado"));
+        usuarioRepository.softDeleteByEmail(email);
     }
 
     public void atualizarUsuarioAutenticado(String username, UsuarioDTO usuarioDTO){
@@ -87,12 +90,4 @@ public class UsuarioService {
     }
 
 
-    }
-
-
-
-
-
-
-
-
+}

@@ -1,6 +1,7 @@
 package com.squad27.gerenciadorsalas.services;
 
 import com.squad27.gerenciadorsalas.domain.*;
+import java.time.temporal.ChronoUnit;
 import com.squad27.gerenciadorsalas.dto.*;
 import com.squad27.gerenciadorsalas.enums.DiaSemana;
 import com.squad27.gerenciadorsalas.enums.StatusReserva;
@@ -113,7 +114,7 @@ public class DisponibilidadeService {
                     "A sala está bloqueada nessa data. Motivo: " + d.getMotivo());
         });
 
-        long diasDeAntecedencia = LocalDate.now().until(dataReserva).getDays();
+        long diasDeAntecedencia = ChronoUnit.DAYS.between(LocalDate.now(), dataReserva);
         if (diasDeAntecedencia < disponibilidade.getAntecedenciaMinimaDias()) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
                     "A reserva deve ser feita com pelo menos " +

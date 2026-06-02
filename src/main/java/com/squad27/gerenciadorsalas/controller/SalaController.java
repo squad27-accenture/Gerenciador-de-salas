@@ -8,6 +8,8 @@ import com.squad27.gerenciadorsalas.services.SalaService;
 import com.squad27.gerenciadorsalas.dto.SalaDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -27,8 +29,10 @@ public class SalaController {
     ReservaService reservaService;
 
     @PostMapping("CadastrarSala")
-    public ResponseEntity<SalaResponseDTO> cadastrarSala(@RequestBody SalaDTO salaDTO) {
-        Sala salaSalva = salaService.cadastrarsala(salaDTO);
+    public ResponseEntity<SalaResponseDTO> cadastrarSala(
+            @RequestBody SalaDTO salaDTO,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Sala salaSalva = salaService.cadastrarsala(salaDTO, userDetails.getUsername());
         return ResponseEntity.ok(new SalaResponseDTO(
                 salaSalva.getId(),
                 salaSalva.getNome(),
@@ -45,18 +49,19 @@ public class SalaController {
         return ResponseEntity.ok(salas);
     }
 
-
-
     @DeleteMapping("DeletarSala")
-    public ResponseEntity<String> deletarSalaPorId(@RequestParam Integer id){
-
-        salaService.deletarSalaPorId(id);
-
+    public ResponseEntity<String> deletarSalaPorId(
+            @RequestParam Integer id,
+            @AuthenticationPrincipal UserDetails userDetails){
+        salaService.deletarSalaPorId(id, userDetails.getUsername());
         return ResponseEntity.ok("Sala deletada com SUCESSO!");
     }
 
     @PutMapping("AtualizarSala")
-    public ResponseEntity<String> atualizarSalaPorId(@RequestParam Integer id, @RequestBody SalaDTO salaDTO) {
+    public ResponseEntity<String> atualizarSalaPorId(
+            @RequestParam Integer id,
+            @RequestBody SalaDTO salaDTO,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         Sala sala = Sala.builder()
                 .nome(salaDTO.nome())
@@ -68,8 +73,7 @@ public class SalaController {
                 .raioProximidade(salaDTO.raioProximidade())
                 .build();
 
-        salaService.atualizarSalaPorId(id, sala);
-
+        salaService.atualizarSalaPorId(id, sala, userDetails.getUsername());
         return ResponseEntity.ok("Sala atualizada com SUCESSO!");
     }
 
@@ -100,5 +104,3 @@ public class SalaController {
 
 
 }
-
-
