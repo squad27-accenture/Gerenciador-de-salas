@@ -37,12 +37,13 @@ public class ReservaService {
     private final DisponibilidadeService disponibilidadeService;
     private final AlocacaoService alocacaoService;
     private final AuditoriaService auditoriaService;
+    private final TipoAssentoService tipoAssentoService;
 
     public ReservaService(
             ReservaRepository reservaRepository,
             UsuarioRepository usuarioRepository,
             SalaRepository salaRepository,
-            AssentoRepository assentoRepository, NotificacaoEmailService notificacaoEmailService, DisponibilidadeService disponibilidadeService, AlocacaoService alocacaoService, AuditoriaService auditoriaService
+            AssentoRepository assentoRepository, NotificacaoEmailService notificacaoEmailService, DisponibilidadeService disponibilidadeService, AlocacaoService alocacaoService, AuditoriaService auditoriaService, TipoAssentoService tipoAssentoService
     ) {
         this.reservaRepository = reservaRepository;
         this.usuarioRepository = usuarioRepository;
@@ -52,6 +53,7 @@ public class ReservaService {
         this.disponibilidadeService = disponibilidadeService;
         this.alocacaoService = alocacaoService;
         this.auditoriaService = auditoriaService;
+        this.tipoAssentoService = tipoAssentoService;
     }
 
     public Reserva ReservarAssento(ReservaDTO dto, String emailUsuario) {
@@ -78,8 +80,9 @@ public class ReservaService {
                 .toList();
 
         // Monta lista de tipos preferidos (pessoa única)
-        List<List<TipoAssento>> tiposPorPessoa = new ArrayList<>();
+        List<List<String>> tiposPorPessoa = new ArrayList<>();
         tiposPorPessoa.add(dto.tiposPreferidosPessoa1() != null ? dto.tiposPreferidosPessoa1() : List.of());
+        validarTiposAssento(tiposPorPessoa);
 
         List<Assento> alocados;
         try {
@@ -156,9 +159,10 @@ public class ReservaService {
                 .filter(a -> !posicoesOcupadas.contains(a.getPosicao()))
                 .toList();
 
-        List<List<TipoAssento>> tiposPorPessoa = dto.tiposPreferidosPorPessoa() != null
+        List<List<String>> tiposPorPessoa = dto.tiposPreferidosPorPessoa() != null
                 ? dto.tiposPreferidosPorPessoa()
                 : List.of();
+        validarTiposAssento(tiposPorPessoa);
 
         List<Assento> alocados;
         try {
@@ -361,5 +365,16 @@ public class ReservaService {
                 totalAssentos,
                 taxa
         );
+    }
+    private void validarTiposAssento(List<List<String>> tiposPorPessoa) {
+        for (int i = 0; i < tiposPorPessoa.size(); i++) {
+            List<String> tipos = tiposPorPessoa.get(i);
+            if (tipos == null) continue;
+            for (String tipo : tipos) {
+                if (tipo != null && !tipo.isBlank()) {
+                    tipoAssentoService.validarNome(tipo); // lança 400 se inválido/inativo
+                }
+            }
+        }
     }
 }

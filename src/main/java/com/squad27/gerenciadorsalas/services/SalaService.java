@@ -174,7 +174,7 @@ public class SalaService {
                 .map(assento -> new AssentoReponseDTO(
                         assento.getId(),
                         assento.getPosicao(),
-                        assento.getTipoAssento() == null ? null : assento.getTipoAssento().name(),
+                        assento.getTipoAssento(),
                         assento.getCoordenadaX(),
                         assento.getCoordenadaY(),
                         assento.getTipoCadeira(),

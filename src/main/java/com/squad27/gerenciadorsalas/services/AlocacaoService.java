@@ -2,7 +2,6 @@ package com.squad27.gerenciadorsalas.services;
 
 import com.squad27.gerenciadorsalas.domain.Assento;
 import com.squad27.gerenciadorsalas.enums.CriterioProximidade;
-import com.squad27.gerenciadorsalas.enums.TipoAssento;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,7 +23,7 @@ public class AlocacaoService {
      */
     public List<Assento> alocar(
             List<Assento> assentosLivres,
-            List<List<TipoAssento>> tiposPreferidosPorPessoa,
+            List<List<String>> tiposPreferidosPorPessoa,
             CriterioProximidade criterio,
             double raioProximidade
     ) {
@@ -39,7 +38,7 @@ public class AlocacaoService {
         try {
             List<List<Assento>> candidatosPorPessoa = new ArrayList<>();
             for (int i = 0; i < numPessoas; i++) {
-                List<TipoAssento> tipos = tiposPreferidosPorPessoa.get(i);
+                List<String> tipos = tiposPreferidosPorPessoa.get(i);
                 List<Assento> candidatos = filtrarPorTipos(assentosLivres, tipos);
                 if (candidatos.isEmpty()) {
                     throw new ResponseStatusException(HttpStatus.CONFLICT,
@@ -88,12 +87,13 @@ public class AlocacaoService {
      * Filtra assentos por lista de tipos preferidos (ordem importa — retorna compatíveis com qualquer tipo da lista).
      * Assentos sem tipo definido são aceitos como curinga se a lista for nula/vazia.
      */
-    private List<Assento> filtrarPorTipos(List<Assento> assentos, List<TipoAssento> tipos) {
+    private List<Assento> filtrarPorTipos(List<Assento> assentos, List<String> tipos) {
         if (tipos == null || tipos.isEmpty()) {
             return new ArrayList<>(assentos);
         }
         return assentos.stream()
-                .filter(a -> a.getTipoAssento() == null || tipos.contains(a.getTipoAssento()))
+                .filter(a -> a.getTipoAssento() == null ||
+                        tipos.stream().anyMatch(t -> t.equalsIgnoreCase(a.getTipoAssento())))
                 .toList();
     }
 

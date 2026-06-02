@@ -4,7 +4,6 @@ import com.squad27.gerenciadorsalas.domain.Assento;
 import com.squad27.gerenciadorsalas.domain.Sala;
 import com.squad27.gerenciadorsalas.enums.EquipamentosAssento;
 import com.squad27.gerenciadorsalas.enums.StatusSala;
-import com.squad27.gerenciadorsalas.enums.TipoAssento;
 import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
 import com.squad27.gerenciadorsalas.domain.Usuario;
@@ -53,27 +52,24 @@ public class AssentoIntegrationTest {
         sala.setStatus(StatusSala.DISPONIVEL);
         sala = salaRepository.save(sala);
 
-        // Assento completo — todos os novos campos preenchidos
         Assento a1 = new Assento();
         a1.setSala(sala);
         a1.setPosicao(1);
-        a1.setTipoAssento(TipoAssento.ESTACAO_PADRAO);
+        a1.setTipoAssento("ESTACAO_PADRAO");
         a1.setCoordenadaX(10.5);
         a1.setCoordenadaY(20.0);
         a1.setAtivo(true);
         a1.setEquipamentos(List.of(EquipamentosAssento.MONITOR, EquipamentosAssento.COMPUTADOR_PC));
 
-        // Assento inativo — deve aparecer na lista mas com ativo=false
         Assento a2 = new Assento();
         a2.setSala(sala);
         a2.setPosicao(2);
-        a2.setTipoAssento(TipoAssento.POSICAO_ACESSIVEL);
+        a2.setTipoAssento("POSICAO_ACESSIVEL");
         a2.setCoordenadaX(15.0);
         a2.setCoordenadaY(20.0);
         a2.setAtivo(false);
         a2.setEquipamentos(List.of());
 
-        // Assento sem tipo e sem coordenadas — simula criação automática pela sala
         Assento a3 = new Assento();
         a3.setSala(sala);
         a3.setPosicao(3);
@@ -93,16 +89,13 @@ public class AssentoIntegrationTest {
                         .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3))
-                // Assento 1 — completo
                 .andExpect(jsonPath("$[0].tipoAssento").value("ESTACAO_PADRAO"))
                 .andExpect(jsonPath("$[0].coordenadaX").value(10.5))
                 .andExpect(jsonPath("$[0].coordenadaY").value(20.0))
                 .andExpect(jsonPath("$[0].ativo").value(true))
                 .andExpect(jsonPath("$[0].equipamentos.length()").value(2))
-                // Assento 2 — inativo
                 .andExpect(jsonPath("$[1].ativo").value(false))
                 .andExpect(jsonPath("$[1].tipoAssento").value("POSICAO_ACESSIVEL"))
-                // Assento 3 — campos opcionais nulos (criado automaticamente)
                 .andExpect(jsonPath("$[2].tipoAssento").isEmpty())
                 .andExpect(jsonPath("$[2].coordenadaX").isEmpty())
                 .andExpect(jsonPath("$[2].ativo").value(true));

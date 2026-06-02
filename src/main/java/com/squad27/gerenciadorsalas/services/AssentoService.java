@@ -16,10 +16,12 @@ public class AssentoService {
 
     private final AssentoRepository assentoRepository;
     private final SalaRepository salaRepository;
+    private final TipoAssentoService tipoAssentoService;
 
-    public AssentoService(AssentoRepository assentoRepository, SalaRepository salaRepository) {
+    public AssentoService(AssentoRepository assentoRepository, SalaRepository salaRepository, TipoAssentoService tipoAssentoService) {
         this.assentoRepository = assentoRepository;
         this.salaRepository = salaRepository;
+        this.tipoAssentoService = tipoAssentoService;
     }
 
     public Assento criarAssento(Integer salaId, AssentoRequestDTO dto) {
@@ -35,7 +37,10 @@ public class AssentoService {
         Assento assento = new Assento();
         assento.setSala(sala);
         assento.setPosicao(proximaPosicao);
-        assento.setTipoAssento(dto.tipoAssento());
+        if (dto.tipoAssento() != null) {
+            tipoAssentoService.validarNome(dto.tipoAssento());
+            assento.setTipoAssento(dto.tipoAssento().trim().toUpperCase());
+        }
         assento.setCoordenadaX(dto.coordenadaX());
         assento.setCoordenadaY(dto.coordenadaY());
         assento.setTipoCadeira(dto.tipoCadeira());
@@ -51,7 +56,10 @@ public class AssentoService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Assento na posição " + posicao + " não encontrado na sala."));
 
-        if (dto.tipoAssento() != null)   assento.setTipoAssento(dto.tipoAssento());
+        if (dto.tipoAssento() != null) {
+            tipoAssentoService.validarNome(dto.tipoAssento());
+            assento.setTipoAssento(dto.tipoAssento().trim().toUpperCase());
+        }
         if (dto.coordenadaX() != null)   assento.setCoordenadaX(dto.coordenadaX());
         if (dto.coordenadaY() != null)   assento.setCoordenadaY(dto.coordenadaY());
         if (dto.tipoCadeira() != null)   assento.setTipoCadeira(dto.tipoCadeira());
