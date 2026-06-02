@@ -40,6 +40,16 @@ public class DisponibilidadeController {
                         salaId, dataInicio, dataFim, horarioInicio, horarioFim)
         );
     }
+    @GetMapping("/assentos")
+    public ResponseEntity<List<AssentoStatusDTO>> consultarStatusAssentos(
+            @PathVariable Integer salaId,
+            @RequestParam LocalDate data,
+            @RequestParam(defaultValue = "08:00:00") LocalTime horarioInicio,
+            @RequestParam(defaultValue = "18:00:00") LocalTime horarioFim
+    ) {
+        return ResponseEntity.ok(
+                disponibilidadeService.consultarStatusAssentos(salaId, data, horarioInicio, horarioFim));
+    }
 
     @GetMapping
     public ResponseEntity<List<DisponibilidadeResponseDTO>> listar(

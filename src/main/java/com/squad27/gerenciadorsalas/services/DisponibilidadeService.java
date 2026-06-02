@@ -4,10 +4,7 @@ import com.squad27.gerenciadorsalas.domain.*;
 import com.squad27.gerenciadorsalas.dto.*;
 import com.squad27.gerenciadorsalas.enums.DiaSemana;
 import com.squad27.gerenciadorsalas.enums.StatusReserva;
-import com.squad27.gerenciadorsalas.repositories.DataBloqueadaRepository;
-import com.squad27.gerenciadorsalas.repositories.DisponibilidadeSalaRepository;
-import com.squad27.gerenciadorsalas.repositories.ReservaRepository;
-import com.squad27.gerenciadorsalas.repositories.SalaRepository;
+import com.squad27.gerenciadorsalas.repositories.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,15 +21,17 @@ public class DisponibilidadeService {
     private final DataBloqueadaRepository dataBloqueadaRepository;
     private final SalaRepository salaRepository;
     private final ReservaRepository reservaRepository;
+    private final AssentoRepository assentoRepository;
 
 
     public DisponibilidadeService(DisponibilidadeSalaRepository disponibilidadeRepository,
                                   DataBloqueadaRepository dataBloqueadaRepository,
-                                  SalaRepository salaRepository, ReservaRepository reservaRepository) {
+                                  SalaRepository salaRepository, ReservaRepository reservaRepository, AssentoRepository assentoRepository) {
         this.disponibilidadeRepository = disponibilidadeRepository;
         this.dataBloqueadaRepository = dataBloqueadaRepository;
         this.salaRepository = salaRepository;
         this.reservaRepository = reservaRepository;
+        this.assentoRepository = assentoRepository;
     }
 
     public List<DisponibilidadeResponseDTO> configurarDisponibilidade(Integer salaId, DisponibilidadeDTO dto) {
@@ -193,6 +192,40 @@ public class DisponibilidadeService {
         }
 
         return resultado;
+    }
+    public List<AssentoStatusDTO> consultarStatusAssentos(
+            Integer salaId, LocalDate data,
+            LocalTime horarioInicio, LocalTime horarioFim) {
+
+        salaRepository.findById(salaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
+
+        List<Integer> ocupadas = reservaRepository.buscarPosicoesOcupadas(
+                salaId, data, horarioInicio, horarioFim, StatusReserva.CANCELADA);
+
+        return assentoRepository.findBySalaIdOrderByPosicao(salaId)
+                .stream()
+                .map(a -> {
+                    String status;
+                    if (!Boolean.TRUE.equals(a.getAtivo())) {
+                        status = "INATIVO";
+                    } else if (ocupadas.contains(a.getPosicao())) {
+                        status = "OCUPADO";
+                    } else {
+                        status = "LIVRE";
+                    }
+
+                    return new AssentoStatusDTO(
+                            a.getId(),
+                            a.getPosicao(),
+                            a.getTipoAssento() == null ? null : a.getTipoAssento().name(),
+                            a.getCoordenadaX(),
+                            a.getCoordenadaY(),
+                            status,
+                            a.getEquipamentos().stream().map(Enum::name).toList()
+                    );
+                })
+                .toList();
     }
 
     private DiaSemana converterDiaSemana(LocalDate data) {
