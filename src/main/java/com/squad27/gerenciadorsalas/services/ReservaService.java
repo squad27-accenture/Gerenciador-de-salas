@@ -106,7 +106,7 @@ public class ReservaService {
         reserva.setDataReserva(dto.dataReserva());
         reserva.setSala(sala);
         reserva.setUsuario(usuario);
-        reserva.setStatusReserva(StatusReserva.EmANDAMENTO);
+        reserva.setStatusReserva(StatusReserva.CONFIRMADA);
         reserva.setPosicaoAssento(assentoEscolhido.getPosicao());
 
         Reserva salva = reservaRepository.save(reserva);
@@ -188,7 +188,7 @@ public class ReservaService {
             reserva.setDataReserva(dto.dataReserva());
             reserva.setSala(sala);
             reserva.setUsuario(usuario);
-            reserva.setStatusReserva(StatusReserva.EmANDAMENTO);
+            reserva.setStatusReserva(StatusReserva.CONFIRMADA);
             reserva.setPosicaoAssento(assento.getPosicao());
             reserva.setCodigoGrupo(codigoGrupo);
             reservas.add(reserva);
