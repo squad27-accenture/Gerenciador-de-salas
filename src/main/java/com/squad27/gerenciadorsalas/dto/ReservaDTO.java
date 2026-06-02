@@ -1,7 +1,7 @@
 package com.squad27.gerenciadorsalas.dto;
 
 import com.squad27.gerenciadorsalas.enums.CriterioProximidade;
-import com.squad27.gerenciadorsalas.enums.TipoAssento;
+
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -13,9 +13,9 @@ public record ReservaDTO(
         LocalDate dataReserva,
         Integer salaId,
         // até 3 tipos preferidos por pessoa, em ordem de preferência
-        List<TipoAssento> tiposPreferidosPessoa1,
-        List<TipoAssento> tiposPreferidosPessoa2,
-        List<TipoAssento> tiposPreferidosPessoa3,
+        List<String> tiposPreferidosPessoa1,
+        List<String> tiposPreferidosPessoa2,
+        List<String> tiposPreferidosPessoa3,
         Integer quantidadePessoas,
         CriterioProximidade criterioProximidade
 ) {}

@@ -219,7 +219,7 @@ public class DisponibilidadeService {
                     return new AssentoStatusDTO(
                             a.getId(),
                             a.getPosicao(),
-                            a.getTipoAssento() == null ? null : a.getTipoAssento().name(),
+                            a.getTipoAssento(),
                             a.getCoordenadaX(),
                             a.getCoordenadaY(),
                             status,

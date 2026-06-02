@@ -26,9 +26,8 @@ public class Assento {
 
     private int posicao;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_assento")
-    private TipoAssento tipoAssento;
+    @Column(name = "tipo_assento", length = 50)
+    private String tipoAssento;
 
     @Column(name = "coordenada_x")
     private Double coordenadaX;

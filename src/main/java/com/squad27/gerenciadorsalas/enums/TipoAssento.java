@@ -1,5 +1,8 @@
 package com.squad27.gerenciadorsalas.enums;
 
+
+//NAO É USADO MAIS NO PROJETO , MAS DEIXEI AQUI CASO DE ALGUMA MERDA
+
 public enum TipoAssento {
     ESTACAO_PADRAO,
     ESTACAO_EXECUTIVA,
