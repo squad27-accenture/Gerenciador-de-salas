@@ -12,6 +12,12 @@ import java.util.*;
 @Service
 public class AlocacaoService {
 
+    private final AuditoriaService auditoriaService;
+
+    public AlocacaoService(AuditoriaService auditoriaService) {
+        this.auditoriaService = auditoriaService;
+    }
+
     /**
      * Seleciona os melhores assentos para um grupo de pessoas.
      * Retorna a lista de assentos alocados na mesma ordem das pessoas.
@@ -22,33 +28,60 @@ public class AlocacaoService {
             CriterioProximidade criterio,
             double raioProximidade
     ) {
+        long inicio = System.currentTimeMillis();
         int numPessoas = tiposPreferidosPorPessoa.size();
 
-        // Filtra assentos compatíveis por pessoa (respeita ordem de preferência)
-        List<List<Assento>> candidatosPorPessoa = new ArrayList<>();
-        for (int i = 0; i < numPessoas; i++) {
-            List<TipoAssento> tipos = tiposPreferidosPorPessoa.get(i);
-            List<Assento> candidatos = filtrarPorTipos(assentosLivres, tipos);
-            if (candidatos.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Não há assentos disponíveis compatíveis com os tipos preferidos da pessoa " + (i + 1) + ".");
+        String entrada = String.format(
+                "pessoas=%d | assentosLivres=%d | criterio=%s | raio=%.1f",
+                numPessoas, assentosLivres.size(), criterio, raioProximidade
+        );
+
+        try {
+            List<List<Assento>> candidatosPorPessoa = new ArrayList<>();
+            for (int i = 0; i < numPessoas; i++) {
+                List<TipoAssento> tipos = tiposPreferidosPorPessoa.get(i);
+                List<Assento> candidatos = filtrarPorTipos(assentosLivres, tipos);
+                if (candidatos.isEmpty()) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            "Não há assentos disponíveis compatíveis com os tipos preferidos da pessoa " + (i + 1) + ".");
+                }
+                candidatosPorPessoa.add(candidatos);
             }
-            candidatosPorPessoa.add(candidatos);
-        }
 
-        // Encontra a melhor combinação minimizando distância euclidiana total
-        List<Assento> melhorCombinacao = encontrarMelhorCombinacao(candidatosPorPessoa);
+            List<Assento> melhorCombinacao = encontrarMelhorCombinacao(candidatosPorPessoa);
 
-        // Valida proximidade obrigatória
-        if (criterio == CriterioProximidade.OBRIGATORIA) {
-            double distanciaMaxima = calcularDistanciaMaxima(melhorCombinacao);
-            if (distanciaMaxima > raioProximidade) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Não há posições livres e compatíveis suficientemente próximas para atender a proximidade OBRIGATÓRIA.");
+            if (criterio == CriterioProximidade.OBRIGATORIA) {
+                double distanciaMaxima = calcularDistanciaMaxima(melhorCombinacao);
+                if (distanciaMaxima > raioProximidade) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            "Não há posições livres e compatíveis suficientemente próximas para atender a proximidade OBRIGATÓRIA.");
+                }
             }
-        }
 
-        return melhorCombinacao;
+            long duracao = System.currentTimeMillis() - inicio;
+            String saida = String.format(
+                    "alocado=true | assentos=%s | duracaoMs=%d",
+                    melhorCombinacao.stream().map(a -> String.valueOf(a.getPosicao())).toList(),
+                    duracao
+            );
+
+            auditoriaService.registrar("ALOCACAO", "ALGORITMO", null, null,
+                    "ENTRADA: " + entrada + " | SAIDA: " + saida);
+
+            return melhorCombinacao;
+
+        } catch (ResponseStatusException ex) {
+            long duracao = System.currentTimeMillis() - inicio;
+            String saida = String.format(
+                    "alocado=false | motivo=%s | duracaoMs=%d",
+                    ex.getReason(), duracao
+            );
+
+            auditoriaService.registrar("ALOCACAO", "ALGORITMO", null, null,
+                    "ENTRADA: " + entrada + " | SAIDA: " + saida);
+
+            throw ex;
+        }
     }
 
     /**
