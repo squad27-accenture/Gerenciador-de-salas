@@ -38,6 +38,8 @@ public class AssentoService {
         assento.setTipoAssento(dto.tipoAssento());
         assento.setCoordenadaX(dto.coordenadaX());
         assento.setCoordenadaY(dto.coordenadaY());
+        assento.setTipoCadeira(dto.tipoCadeira());
+        assento.setTipoMesa(dto.tipoMesa());
         assento.setAtivo(true);
         assento.setEquipamentos(dto.equipamentos() != null ? dto.equipamentos() : List.of());
 
@@ -52,6 +54,8 @@ public class AssentoService {
         if (dto.tipoAssento() != null)   assento.setTipoAssento(dto.tipoAssento());
         if (dto.coordenadaX() != null)   assento.setCoordenadaX(dto.coordenadaX());
         if (dto.coordenadaY() != null)   assento.setCoordenadaY(dto.coordenadaY());
+        if (dto.tipoCadeira() != null)   assento.setTipoCadeira(dto.tipoCadeira());
+        if (dto.tipoMesa() != null)      assento.setTipoMesa(dto.tipoMesa());
         if (dto.equipamentos() != null)  assento.setEquipamentos(dto.equipamentos());
 
         return assentoRepository.save(assento);

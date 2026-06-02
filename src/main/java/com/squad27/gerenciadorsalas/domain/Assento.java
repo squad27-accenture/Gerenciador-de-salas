@@ -36,6 +36,12 @@ public class Assento {
     @Column(name = "coordenada_y")
     private Double coordenadaY;
 
+    @Column(name = "tipo_cadeira", length = 50)
+    private String tipoCadeira;
+
+    @Column(name = "tipo_mesa", length = 50)
+    private String tipoMesa;
+
     @Column(name = "ativo", nullable = false)
     private Boolean ativo = true;
 
