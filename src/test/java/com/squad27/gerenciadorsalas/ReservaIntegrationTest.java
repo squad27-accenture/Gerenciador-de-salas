@@ -108,7 +108,7 @@ public class ReservaIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusReserva").value("EmANDAMENTO"))
+                .andExpect(jsonPath("$.statusReserva").value("CONFIRMADA"))
                 .andExpect(jsonPath("$.salaId").value(sala.getId()));
     }
 
