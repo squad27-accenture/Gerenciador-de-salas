@@ -18,11 +18,16 @@ import java.util.List;
 @Service
 public class SalaService {
 
-    @Autowired
-    private SalaRepository repository;
+    private final SalaRepository repository;
+    private final AssentoRepository assentoRepository;
+    private final AuditoriaService auditoriaService;
 
-    @Autowired
-    private AssentoRepository assentoRepository;
+    public SalaService(SalaRepository repository, AssentoRepository assentoRepository,
+                       AuditoriaService auditoriaService) {
+        this.repository = repository;
+        this.assentoRepository = assentoRepository;
+        this.auditoriaService = auditoriaService;
+    }
 
     public Sala cadastrarsala(SalaDTO salaDTO){
         Sala sala = new Sala();
@@ -69,7 +74,13 @@ public class SalaService {
         sala.setEquipamentosSala(salaDTO.equipamentosSala());
         sala.setDeletado(false);
         sala.setRaioProximidade(salaDTO.raioProximidade() != null ? salaDTO.raioProximidade() : 5.0);
-        return repository.save(sala);
+        Sala salva = repository.save(sala);
+        auditoriaService.registrar(
+                "CRIACAO", "SALA", String.valueOf(salva.getId()),
+                null,
+                "Sala criada: " + salva.getNome() + " — capacidade " + salva.getCapacidade()
+        );
+        return salva;
     }
 
     public List<SalaResponseDTO> listarSalas() {
@@ -141,6 +152,11 @@ public class SalaService {
         }
 
         repository.save(salaEntity);
+        auditoriaService.registrar(
+                "EDICAO", "SALA", String.valueOf(id),
+                null,
+                "Sala atualizada: " + salaEntity.getNome()
+        );
     }
 
     public List<AssentoReponseDTO> listarAssentosDaSala(Integer salaId) {

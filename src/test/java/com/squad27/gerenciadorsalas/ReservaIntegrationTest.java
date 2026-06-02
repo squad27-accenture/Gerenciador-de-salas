@@ -212,7 +212,7 @@ public class ReservaIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(dto))
                         .header("Authorization", tokenUsuario))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].codigoGrupo").isNotEmpty())
                 .andExpect(jsonPath("$[1].codigoGrupo").isNotEmpty())
