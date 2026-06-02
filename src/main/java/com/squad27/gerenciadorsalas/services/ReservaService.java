@@ -14,6 +14,7 @@ import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
 import com.squad27.gerenciadorsalas.repositories.ReservaRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
 import com.squad27.gerenciadorsalas.repositories.UsuarioRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class ReservaService {
 
@@ -330,10 +332,8 @@ public class ReservaService {
 
     public List<Reserva> buscarHistorico(Integer usuarioId, Integer salaId,
                                          LocalDate dataInicio, LocalDate dataFim) {
-        System.out.println(">>> Buscando histórico: usuarioId=" + usuarioId
-                + " salaId=" + salaId
-                + " dataInicio=" + dataInicio
-                + " dataFim=" + dataFim);
+        log.info("Buscando histórico: usuarioId={} salaId={} dataInicio={} dataFim={}",
+                usuarioId, salaId, dataInicio, dataFim);
         return reservaRepository.buscarHistorico(usuarioId, salaId, dataInicio, dataFim);
     }
 
