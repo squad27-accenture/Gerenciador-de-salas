@@ -34,12 +34,13 @@ public class ReservaService {
     private final NotificacaoEmailService notificacaoEmailService;
     private final DisponibilidadeService disponibilidadeService;
     private final AlocacaoService alocacaoService;
+    private final AuditoriaService auditoriaService;
 
     public ReservaService(
             ReservaRepository reservaRepository,
             UsuarioRepository usuarioRepository,
             SalaRepository salaRepository,
-            AssentoRepository assentoRepository, NotificacaoEmailService notificacaoEmailService, DisponibilidadeService disponibilidadeService, AlocacaoService alocacaoService
+            AssentoRepository assentoRepository, NotificacaoEmailService notificacaoEmailService, DisponibilidadeService disponibilidadeService, AlocacaoService alocacaoService, AuditoriaService auditoriaService
     ) {
         this.reservaRepository = reservaRepository;
         this.usuarioRepository = usuarioRepository;
@@ -48,6 +49,7 @@ public class ReservaService {
         this.notificacaoEmailService = notificacaoEmailService;
         this.disponibilidadeService = disponibilidadeService;
         this.alocacaoService = alocacaoService;
+        this.auditoriaService = auditoriaService;
     }
 
     public Reserva ReservarAssento(ReservaDTO dto, String emailUsuario) {
@@ -97,6 +99,15 @@ public class ReservaService {
         reserva.setPosicaoAssento(assentoEscolhido.getPosicao());
 
         Reserva salva = reservaRepository.save(reserva);
+
+        auditoriaService.registrar(
+                "CRIACAO", "RESERVA", String.valueOf(salva.getId()),
+                emailUsuario,
+                "Reserva criada para sala " + sala.getNome() +
+                        " em " + dto.dataReserva() +
+                        " das " + dto.horarioInicio() + " às " + dto.horarioFim() +
+                        " — assento " + assentoEscolhido.getPosicao()
+        );
 
         notificacaoEmailService.enviarConfirmacaoReserva(
                 usuario.getEmail(), usuario.getUsername(),
@@ -161,6 +172,14 @@ public class ReservaService {
         }
 
         List<Reserva> salvas = reservaRepository.saveAll(reservas);
+        auditoriaService.registrar(
+                "CRIACAO", "RESERVA_GRUPO", codigoGrupo,
+                emailUsuario,
+                "Reserva em grupo criada para sala " + sala.getNome() +
+                        " em " + dto.dataReserva() +
+                        " das " + dto.horarioInicio() + " às " + dto.horarioFim() +
+                        " — assentos " + alocados.stream().map(a -> String.valueOf(a.getPosicao())).toList()
+        );
 
         notificacaoEmailService.enviarConfirmacaoReservaGrupo(
                 usuario.getEmail(), usuario.getUsername(),
@@ -184,6 +203,12 @@ public class ReservaService {
         reserva.setMotivoCancelamento(motivo);
 
         Reserva salva = reservaRepository.save(reserva);
+
+        auditoriaService.registrar(
+                "CANCELAMENTO", "RESERVA", String.valueOf(salva.getId()),
+                emailUsuario,
+                "Reserva cancelada. Motivo: " + (motivo != null ? motivo : "não informado")
+        );
 
         notificacaoEmailService.enviarCancelamentoReserva(
                 reserva.getUsuario().getEmail(),
@@ -214,6 +239,12 @@ public class ReservaService {
         }
 
         List<Reserva> salvas = reservaRepository.saveAll(reservas);
+
+        auditoriaService.registrar(
+                "CANCELAMENTO", "RESERVA_GRUPO", codigoGrupo,
+                emailUsuario,
+                "Reserva em grupo cancelada. Motivo: " + (motivo != null ? motivo : "não informado")
+        );
 
         Reserva primeira = salvas.get(0);
         List<Integer> posicoes = salvas.stream().map(Reserva::getPosicaoAssento).toList();
