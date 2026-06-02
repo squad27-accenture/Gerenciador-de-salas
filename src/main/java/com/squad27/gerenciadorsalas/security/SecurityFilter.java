@@ -28,6 +28,8 @@ public class SecurityFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+
+        System.out.println(">>> PATH: " + request.getRequestURI());
         var token = this.recoverToken(request);
 
 
@@ -64,6 +66,8 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         return path.startsWith("/swagger-ui")
                 || path.startsWith("/v3/api-docs")
+                || path.startsWith("/api/docs")
+                || path.startsWith("/api/swagger-ui")
                 || path.equals("/swagger-ui.html")
                 || path.equals("/auth/login")
                 || path.equals("/auth/cadastro");
