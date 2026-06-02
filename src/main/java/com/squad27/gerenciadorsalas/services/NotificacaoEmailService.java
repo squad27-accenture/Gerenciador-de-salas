@@ -66,12 +66,34 @@ public class NotificacaoEmailService {
     }
 
     private void enviar(String emailDestino, String assunto, String corpo) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(emailRemetente);
-        message.setTo(emailDestino);
-        message.setSubject(assunto);
-        message.setText(corpo);
-        mailSender.send(message);
+        int tentativas = 3;
+        int espera = 1000; // ms
+
+        for (int i = 1; i <= tentativas; i++) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(emailRemetente);
+                message.setTo(emailDestino);
+                message.setSubject(assunto);
+                message.setText(corpo);
+                mailSender.send(message);
+                return; // sucesso — encerra o loop
+            } catch (Exception e) {
+                if (i == tentativas) {
+                    // última tentativa falhou — loga e não propaga para não quebrar o fluxo principal
+                    System.err.println("[EMAIL] Falha ao enviar e-mail após " + tentativas +
+                            " tentativas para " + emailDestino + ". Erro: " + e.getMessage());
+                    return;
+                }
+                try {
+                    Thread.sleep(espera);
+                    espera *= 2; // backoff exponencial: 1s, 2s, 4s
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
     }
     public void enviarCodigoRecuperacao(String emailDestino, String codigo) {
         String assunto = "Recuperação de senha";
