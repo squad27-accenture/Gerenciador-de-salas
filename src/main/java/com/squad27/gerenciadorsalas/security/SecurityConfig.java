@@ -77,6 +77,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/redefinir-senha").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/health").permitAll()
                         // Salas — operações de escrita exigem ADMIN
                         .requestMatchers(HttpMethod.POST,   "/api/v1/salas/CadastrarSala").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT,    "/api/v1/salas/AtualizarSala").hasRole("ADMIN")
