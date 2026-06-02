@@ -19,7 +19,8 @@ public class AlocacaoService {
     public List<Assento> alocar(
             List<Assento> assentosLivres,
             List<List<TipoAssento>> tiposPreferidosPorPessoa,
-            CriterioProximidade criterio
+            CriterioProximidade criterio,
+            double raioProximidade
     ) {
         int numPessoas = tiposPreferidosPorPessoa.size();
 
@@ -41,7 +42,7 @@ public class AlocacaoService {
         // Valida proximidade obrigatória
         if (criterio == CriterioProximidade.OBRIGATORIA) {
             double distanciaMaxima = calcularDistanciaMaxima(melhorCombinacao);
-            if (distanciaMaxima > 5.0) { // raio configurável — aqui 5 unidades
+            if (distanciaMaxima > raioProximidade) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT,
                         "Não há posições livres e compatíveis suficientemente próximas para atender a proximidade OBRIGATÓRIA.");
             }

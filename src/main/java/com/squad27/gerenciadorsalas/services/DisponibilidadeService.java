@@ -1,13 +1,12 @@
 package com.squad27.gerenciadorsalas.services;
 
 import com.squad27.gerenciadorsalas.domain.*;
-import com.squad27.gerenciadorsalas.dto.DataBloqueadaDTO;
-import com.squad27.gerenciadorsalas.dto.DataBloqueadaResponseDTO;
-import com.squad27.gerenciadorsalas.dto.DisponibilidadeDTO;
-import com.squad27.gerenciadorsalas.dto.DisponibilidadeResponseDTO;
+import com.squad27.gerenciadorsalas.dto.*;
 import com.squad27.gerenciadorsalas.enums.DiaSemana;
+import com.squad27.gerenciadorsalas.enums.StatusReserva;
 import com.squad27.gerenciadorsalas.repositories.DataBloqueadaRepository;
 import com.squad27.gerenciadorsalas.repositories.DisponibilidadeSalaRepository;
+import com.squad27.gerenciadorsalas.repositories.ReservaRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -23,14 +23,16 @@ public class DisponibilidadeService {
     private final DisponibilidadeSalaRepository disponibilidadeRepository;
     private final DataBloqueadaRepository dataBloqueadaRepository;
     private final SalaRepository salaRepository;
+    private final ReservaRepository reservaRepository;
 
 
     public DisponibilidadeService(DisponibilidadeSalaRepository disponibilidadeRepository,
                                   DataBloqueadaRepository dataBloqueadaRepository,
-                                  SalaRepository salaRepository) {
+                                  SalaRepository salaRepository, ReservaRepository reservaRepository) {
         this.disponibilidadeRepository = disponibilidadeRepository;
         this.dataBloqueadaRepository = dataBloqueadaRepository;
         this.salaRepository = salaRepository;
+        this.reservaRepository = reservaRepository;
     }
 
     public List<DisponibilidadeResponseDTO> configurarDisponibilidade(Integer salaId, DisponibilidadeDTO dto) {
@@ -128,6 +130,69 @@ public class DisponibilidadeService {
                                 disponibilidade.getHorarioFechamento());
             }
         }
+    }
+    public List<DisponibilidadePeriodoResponseDTO> consultarDisponibilidadePorPeriodo(
+            Integer salaId, LocalDate dataInicio, LocalDate dataFim,
+            LocalTime horarioInicio, LocalTime horarioFim) {
+
+        if (dataInicio.isAfter(dataFim)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "A data de início deve ser anterior à data fim.");
+        }
+        if (dataFim.isAfter(dataInicio.plusMonths(3))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "O período máximo de consulta é de 3 meses.");
+        }
+
+        Sala sala = salaRepository.findById(salaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
+
+        List<Assento> todosAssentos = sala.getAssentos();
+        int totalAssentos = todosAssentos.size();
+        int inativos = (int) todosAssentos.stream().filter(a -> !Boolean.TRUE.equals(a.getAtivo())).count();
+
+        List<DisponibilidadePeriodoResponseDTO> resultado = new ArrayList<>();
+        LocalDate data = dataInicio;
+
+        while (!data.isAfter(dataFim)) {
+            DiaSemana diaSemana = converterDiaSemana(data);
+            final LocalDate dataAtual = data;
+
+            // verifica se há configuração para o dia
+            var disponibilidadeOpt = disponibilidadeRepository.findBySalaIdAndDiaSemana(salaId, diaSemana);
+            if (disponibilidadeOpt.isEmpty() || !disponibilidadeOpt.get().getAceitaReservas()) {
+                resultado.add(new DisponibilidadePeriodoResponseDTO(
+                        dataAtual, diaSemana.name(), "INDISPONIVEL",
+                        "Sala não aceita reservas neste dia.", totalAssentos, 0, 0, inativos));
+                data = data.plusDays(1);
+                continue;
+            }
+
+            // verifica data bloqueada
+            var bloqueio = dataBloqueadaRepository.findBySalaIdAndData(salaId, dataAtual);
+            if (bloqueio.isPresent()) {
+                resultado.add(new DisponibilidadePeriodoResponseDTO(
+                        dataAtual, diaSemana.name(), "BLOQUEADA",
+                        bloqueio.get().getMotivo(), totalAssentos, 0, 0, inativos));
+                data = data.plusDays(1);
+                continue;
+            }
+
+            // conta ocupados no horário
+            List<Integer> ocupadas = reservaRepository.buscarPosicoesOcupadas(
+                    salaId, dataAtual, horarioInicio, horarioFim, StatusReserva.CANCELADA);
+            int ocupados = ocupadas.size();
+            int ativos = totalAssentos - inativos;
+            int livres = Math.max(0, ativos - ocupados);
+
+            resultado.add(new DisponibilidadePeriodoResponseDTO(
+                    dataAtual, diaSemana.name(), "DISPONIVEL",
+                    null, totalAssentos, livres, ocupados, inativos));
+
+            data = data.plusDays(1);
+        }
+
+        return resultado;
     }
 
     private DiaSemana converterDiaSemana(LocalDate data) {

@@ -37,6 +37,9 @@ public class Sala {
     @Column(nullable = false)
     private Boolean deletado = false;
 
+    @Column(name = "raio_proximidade", nullable = false)
+    private Double raioProximidade = 5.0;
+
 
 
     @Enumerated(EnumType.STRING)

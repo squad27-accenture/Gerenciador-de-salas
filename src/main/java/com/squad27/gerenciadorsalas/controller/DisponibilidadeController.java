@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @RestController
@@ -24,6 +25,20 @@ public class DisponibilidadeController {
             @RequestBody DisponibilidadeDTO dto
     ) {
         return ResponseEntity.ok(disponibilidadeService.configurarDisponibilidade(salaId, dto));
+    }
+
+    @GetMapping("/periodo")
+    public ResponseEntity<List<DisponibilidadePeriodoResponseDTO>> consultarPorPeriodo(
+            @PathVariable Integer salaId,
+            @RequestParam LocalDate dataInicio,
+            @RequestParam LocalDate dataFim,
+            @RequestParam(defaultValue = "08:00:00") LocalTime horarioInicio,
+            @RequestParam(defaultValue = "18:00:00") LocalTime horarioFim
+    ) {
+        return ResponseEntity.ok(
+                disponibilidadeService.consultarDisponibilidadePorPeriodo(
+                        salaId, dataInicio, dataFim, horarioInicio, horarioFim)
+        );
     }
 
     @GetMapping
