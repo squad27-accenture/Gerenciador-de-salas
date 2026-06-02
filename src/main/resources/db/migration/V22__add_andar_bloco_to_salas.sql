@@ -1,0 +1,3 @@
+ALTER TABLE salas
+    ADD COLUMN andar  VARCHAR(20),
+    ADD COLUMN bloco  VARCHAR(20);
