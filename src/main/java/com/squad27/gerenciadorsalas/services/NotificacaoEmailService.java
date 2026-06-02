@@ -148,6 +148,31 @@ public class NotificacaoEmailService {
 
         enviar(emailDestino, assunto, corpo);
     }
+
+    public void enviarRejeicaoReserva(String emailDestino, String nomeUsuario,
+                                      String nomeSala, String data,
+                                      String horarioInicio, String horarioFim,
+                                      String motivo) {
+        String assunto = "Reserva não confirmada — " + nomeSala;
+        String corpo = String.format("""
+            Olá, %s!
+            
+            Infelizmente sua reserva não pôde ser confirmada.
+            
+            📍 Sala: %s
+            📅 Data: %s
+            🕐 Horário: %s às %s
+            
+            ❌ Motivo: %s
+            
+            Tente novamente com outras datas ou horários disponíveis.
+            
+            Atenciosamente,
+            Sistema de Gerenciamento de Salas
+            """, nomeUsuario, nomeSala, data, horarioInicio, horarioFim, motivo);
+
+        enviar(emailDestino, assunto, corpo);
+    }
 }
 
 
