@@ -62,6 +62,8 @@ public class AssentoController {
                 assento.getTipoAssento() == null ? null : assento.getTipoAssento().name(),
                 assento.getCoordenadaX(),
                 assento.getCoordenadaY(),
+                assento.getTipoCadeira(),
+                assento.getTipoMesa(),
                 assento.getAtivo(),
                 assento.getEquipamentos().stream().map(Enum::name).toList()
         );

@@ -8,6 +8,8 @@ public record AssentoReponseDTO(
         String tipoAssento,
         Double coordenadaX,
         Double coordenadaY,
+        String tipoCadeira,
+        String tipoMesa,
         Boolean ativo,
-        List<String> equipamentos) {
-}
+        List<String> equipamentos
+) {}

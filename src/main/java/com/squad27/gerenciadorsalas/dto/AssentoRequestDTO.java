@@ -9,5 +9,7 @@ public record AssentoRequestDTO(
         TipoAssento tipoAssento,
         Double coordenadaX,
         Double coordenadaY,
+        String tipoCadeira,
+        String tipoMesa,
         List<EquipamentosAssento> equipamentos
 ) {}
