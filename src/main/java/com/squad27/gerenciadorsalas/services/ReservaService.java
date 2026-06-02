@@ -59,12 +59,12 @@ public class ReservaService {
         Usuario usuario = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
 
         validarHorarios(dto.horarioInicio(), dto.horarioFim());
+        validarDataReserva(dto.dataReserva());
         disponibilidadeService.validarDisponibilidade(
                 dto.salaId(), dto.dataReserva(),
                 dto.horarioInicio(), dto.horarioFim()
         );
 
-        // Busca assentos livres na sala para o horário solicitado
         List<Integer> posicoesOcupadas = reservaRepository.buscarPosicoesOcupadas(
                 dto.salaId(), dto.dataReserva(),
                 dto.horarioInicio(), dto.horarioFim(), StatusReserva.CANCELADA
@@ -137,6 +137,7 @@ public class ReservaService {
         Usuario usuario = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
 
         validarHorarios(dto.horarioInicio(), dto.horarioFim());
+        validarDataReserva(dto.dataReserva());
         disponibilidadeService.validarDisponibilidade(
                 dto.salaId(), dto.dataReserva(),
                 dto.horarioInicio(), dto.horarioFim()
@@ -303,6 +304,17 @@ public class ReservaService {
         if (!inicio.isBefore(fim)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "O horário inicial precisa ser antes do horário final.");
+        }
+    }
+
+    private void validarDataReserva(LocalDate dataReserva) {
+        if (dataReserva == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "A data da reserva é obrigatória.");
+        }
+        if (dataReserva.isBefore(LocalDate.now())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Não é possível realizar reservas para datas passadas.");
         }
     }
 

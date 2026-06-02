@@ -29,7 +29,7 @@ public class SalaService {
         this.auditoriaService = auditoriaService;
     }
 
-    public Sala cadastrarsala(SalaDTO salaDTO){
+    public Sala cadastrarsala(SalaDTO salaDTO, String emailUsuario){
         Sala sala = new Sala();
         String nome = salaDTO.nome().trim();
 
@@ -41,9 +41,9 @@ public class SalaService {
         }
 
         if (salaDTO.nome()  ==  null || salaDTO.nome().isEmpty()){
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "O nome da sala é obrigatorio.");
-            }
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "O nome da sala é obrigatorio.");
+        }
         if (salaDTO.capacidade() <=0){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "A capacidade da sala deve ser maior que 0.");
@@ -77,7 +77,7 @@ public class SalaService {
         Sala salva = repository.save(sala);
         auditoriaService.registrar(
                 "CRIACAO", "SALA", String.valueOf(salva.getId()),
-                null,
+                emailUsuario,
                 "Sala criada: " + salva.getNome() + " — capacidade " + salva.getCapacidade()
         );
         return salva;
@@ -98,11 +98,16 @@ public class SalaService {
     }
 
     @Transactional
-    public void deletarSalaPorId(Integer id) {
+    public void deletarSalaPorId(Integer id, String emailUsuario) {
         if (!repository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada.");
         }
         repository.softDeleteById(id);
+        auditoriaService.registrar(
+                "EXCLUSAO", "SALA", String.valueOf(id),
+                emailUsuario,
+                "Sala removida (soft delete)"
+        );
     }
 
     @Transactional
@@ -111,7 +116,7 @@ public class SalaService {
     }
 
     @Transactional
-    public void atualizarSalaPorId(Integer id, Sala sala) {
+    public void atualizarSalaPorId(Integer id, Sala sala, String emailUsuario) {
 
         Sala salaEntity = repository.findByIdAndDeletadoFalse(id).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada.")
@@ -154,7 +159,7 @@ public class SalaService {
         repository.save(salaEntity);
         auditoriaService.registrar(
                 "EDICAO", "SALA", String.valueOf(id),
-                null,
+                emailUsuario,
                 "Sala atualizada: " + salaEntity.getNome()
         );
     }

@@ -67,26 +67,38 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
+                        // Auth — público
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/cadastro").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/salas").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/salas/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/usuarios/deletarConta").hasAnyRole("USER", "ADMIN") // <- específica primeiro
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/usuarios/**").hasRole("ADMIN")                       // <- genérica depois
-                        .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/listarUsuarios").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/recuperar-senha").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/redefinir-senha").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/salas/*/disponibilidade").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/salas/*/disponibilidade/bloquear").hasRole("ADMIN")
+                        // Salas — operações de escrita exigem ADMIN
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/salas/CadastrarSala").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/salas/AtualizarSala").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/salas/DeletarSala").hasRole("ADMIN")
+                        // Assentos — criar/editar/inativar exigem ADMIN
+                        .requestMatchers(HttpMethod.POST,  "/api/v1/salas/*/assentos").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,   "/api/v1/salas/*/assentos/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/salas/*/assentos/*/inativar").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/salas/*/assentos/*/reativar").hasRole("ADMIN")
+                        // Disponibilidade — configuração exige ADMIN
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/salas/*/disponibilidade").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/salas/*/disponibilidade/bloquear").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/salas/*/disponibilidade/bloqueadas").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/salas/*/disponibilidade").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/salas/*/disponibilidade/bloqueadas").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/salas/*/disponibilidade").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/salas/*/disponibilidade/**").authenticated()
+                        // Auditoria — somente ADMIN
+                        .requestMatchers("/api/v1/auditoria/**").hasRole("ADMIN")
+                        // Usuários
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/usuarios/listarUsuarios").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/usuarios/deletarConta").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/usuarios/**").hasRole("ADMIN")
+                        // Actuator
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

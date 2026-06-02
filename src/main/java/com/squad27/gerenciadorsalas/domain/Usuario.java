@@ -28,6 +28,9 @@ public class Usuario implements UserDetails {
     private Role role;
     private String username;
 
+    @Column(nullable = false)
+    private Boolean deletado = false;
+
     public Usuario(String email, String senha, Role role, String username){
         this.email = email;
         this.senha = senha;
@@ -38,10 +41,10 @@ public class Usuario implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities(){
         if (this.role == Role.ADMIN)
             return List.of(
-                new SimpleGrantedAuthority("ROLE_ADMIN"),
-                new SimpleGrantedAuthority("ROLE_USER"),
-                new SimpleGrantedAuthority("ROLE_TECHLEADER")
-        );
+                    new SimpleGrantedAuthority("ROLE_ADMIN"),
+                    new SimpleGrantedAuthority("ROLE_USER"),
+                    new SimpleGrantedAuthority("ROLE_TECHLEADER")
+            );
         if(this.role == Role.TECHLEADER)
             return List.of(
                     new SimpleGrantedAuthority("ROLE_USER"),
