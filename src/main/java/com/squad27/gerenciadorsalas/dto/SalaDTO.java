@@ -13,5 +13,7 @@ public record SalaDTO(
         List<EquipamentosSala> equipamentosSala,
         String cidade,
         String estado,
+        String andar,
+        String bloco,
         Double raioProximidade
 ) {}

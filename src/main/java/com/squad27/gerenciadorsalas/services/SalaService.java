@@ -71,6 +71,8 @@ public class SalaService {
         sala.setLocal(salaDTO.local());
         sala.setCidade(salaDTO.cidade());
         sala.setEstado(salaDTO.estado());
+        sala.setAndar(salaDTO.andar());
+        sala.setBloco(salaDTO.bloco());
         sala.setEquipamentosSala(salaDTO.equipamentosSala());
         sala.setDeletado(false);
         sala.setRaioProximidade(salaDTO.raioProximidade() != null ? salaDTO.raioProximidade() : 5.0);
@@ -92,7 +94,9 @@ public class SalaService {
                         sala.getCapacidade(),
                         sala.getLocal(),
                         sala.getCidade(),
-                        sala.getEstado()
+                        sala.getEstado(),
+                        sala.getAndar(),
+                        sala.getBloco()
                 ))
                 .toList();
     }

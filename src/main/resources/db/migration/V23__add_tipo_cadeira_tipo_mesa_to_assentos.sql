@@ -1,0 +1,3 @@
+ALTER TABLE assentos
+    ADD COLUMN IF NOT EXISTS tipo_cadeira VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS tipo_mesa    VARCHAR(50);

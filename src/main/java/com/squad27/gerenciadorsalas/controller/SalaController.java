@@ -7,6 +7,7 @@ import com.squad27.gerenciadorsalas.services.ReservaService;
 import com.squad27.gerenciadorsalas.services.SalaService;
 import com.squad27.gerenciadorsalas.dto.SalaDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,14 +33,18 @@ public class SalaController {
     public ResponseEntity<SalaResponseDTO> cadastrarSala(
             @RequestBody SalaDTO salaDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Sala salaSalva = salaService.cadastrarsala(salaDTO, userDetails.getUsername());
-        return ResponseEntity.ok(new SalaResponseDTO(
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SalaResponseDTO(
                 salaSalva.getId(),
                 salaSalva.getNome(),
                 salaSalva.getCapacidade(),
                 salaSalva.getLocal(),
                 salaSalva.getCidade(),
-                salaSalva.getEstado()
+                salaSalva.getEstado(),
+                salaSalva.getAndar(),
+                salaSalva.getBloco()
         ));
     }
 

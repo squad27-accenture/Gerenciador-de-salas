@@ -47,6 +47,8 @@ public class Sala {
     private String local;
     private String estado;
     private String cidade;
+    private String andar;
+    private String bloco;
 
     @Builder.Default
     @OneToMany(mappedBy = "sala", cascade = CascadeType.ALL)
