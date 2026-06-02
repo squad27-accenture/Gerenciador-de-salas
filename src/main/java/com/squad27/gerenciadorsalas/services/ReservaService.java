@@ -79,11 +79,22 @@ public class ReservaService {
         List<List<TipoAssento>> tiposPorPessoa = new ArrayList<>();
         tiposPorPessoa.add(dto.tiposPreferidosPessoa1() != null ? dto.tiposPreferidosPessoa1() : List.of());
 
-        List<Assento> alocados = alocacaoService.alocar(
-                assentosLivres, tiposPorPessoa,
-                dto.criterioProximidade() != null ? dto.criterioProximidade() : CriterioProximidade.NENHUM,
-                sala.getRaioProximidade()
-        );
+        List<Assento> alocados;
+        try {
+            alocados = alocacaoService.alocar(
+                    assentosLivres, tiposPorPessoa,
+                    dto.criterioProximidade() != null ? dto.criterioProximidade() : CriterioProximidade.NENHUM,
+                    sala.getRaioProximidade()
+            );
+        } catch (ResponseStatusException ex) {
+            notificacaoEmailService.enviarRejeicaoReserva(
+                    usuario.getEmail(), usuario.getUsername(),
+                    sala.getNome(), dto.dataReserva().toString(),
+                    dto.horarioInicio().toString(), dto.horarioFim().toString(),
+                    ex.getReason()
+            );
+            throw ex;
+        }
 
         Assento assentoEscolhido = alocados.get(0);
         validarConflito(dto.salaId(), assentoEscolhido.getPosicao(), dto.dataReserva(),
@@ -146,11 +157,22 @@ public class ReservaService {
                 ? dto.tiposPreferidosPorPessoa()
                 : List.of();
 
-        List<Assento> alocados = alocacaoService.alocar(
-                assentosLivres, tiposPorPessoa,
-                dto.criterioProximidade() != null ? dto.criterioProximidade() : CriterioProximidade.NENHUM,
-                sala.getRaioProximidade()
-        );
+        List<Assento> alocados;
+        try {
+            alocados = alocacaoService.alocar(
+                    assentosLivres, tiposPorPessoa,
+                    dto.criterioProximidade() != null ? dto.criterioProximidade() : CriterioProximidade.NENHUM,
+                    sala.getRaioProximidade()
+            );
+        } catch (ResponseStatusException ex) {
+            notificacaoEmailService.enviarRejeicaoReserva(
+                    usuario.getEmail(), usuario.getUsername(),
+                    sala.getNome(), dto.dataReserva().toString(),
+                    dto.horarioInicio().toString(), dto.horarioFim().toString(),
+                    ex.getReason()
+            );
+            throw ex;
+        }
 
         String codigoGrupo = UUID.randomUUID().toString();
         List<Reserva> reservas = new ArrayList<>();
