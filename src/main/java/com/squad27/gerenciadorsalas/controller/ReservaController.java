@@ -18,20 +18,21 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/reserva/")
+@RequestMapping("/api/v1/reservas")
+
 public class ReservaController {
 
     @Autowired
     private ReservaService reservaService;
 
-    @PostMapping("realizarReserva")
+    @PostMapping
     public ResponseEntity<ReservaResponseDTO> realizarReserva(@RequestBody ReservaDTO dto, @AuthenticationPrincipal UserDetails userDetails) {
 
         Reserva reserva = reservaService.ReservarAssento(dto, userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(new ReservaResponseDTO(reserva));
     }
 
-    @PostMapping("reservaGrupo")
+    @PostMapping("/grupo")
     public ResponseEntity<List<ReservaResponseDTO>> reservaGrupo(@RequestBody ReservaGrupoDTO grupoDTO, @AuthenticationPrincipal UserDetails userDetails) {
 
         List<Reserva> reservas = reservaService.reservaGrupo(grupoDTO, userDetails.getUsername());
