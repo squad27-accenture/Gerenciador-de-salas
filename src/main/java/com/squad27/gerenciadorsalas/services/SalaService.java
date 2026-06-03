@@ -231,6 +231,12 @@ public class SalaService {
         return toResponseDTO(salva);
     }
 
+    public SalaResponseDTO buscarSalaPorId(Integer id) {
+        Sala sala = repository.findByIdAndDeletadoFalse(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
+        return toResponseDTO(sala);
+    }
+
     public LayoutPreviewDTO layoutPreview(Integer salaId) {
         Sala sala = repository.findByIdAndDeletadoFalse(salaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
