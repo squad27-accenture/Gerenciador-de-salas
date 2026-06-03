@@ -1,17 +1,16 @@
 package com.squad27.gerenciadorsalas.controller;
 
 import com.squad27.gerenciadorsalas.domain.Sala;
-import com.squad27.gerenciadorsalas.dto.AssentoReponseDTO;
-import com.squad27.gerenciadorsalas.dto.SalaResponseDTO;
+import com.squad27.gerenciadorsalas.dto.*;
 import com.squad27.gerenciadorsalas.services.ReservaService;
 import com.squad27.gerenciadorsalas.services.SalaService;
-import com.squad27.gerenciadorsalas.dto.SalaDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -105,6 +104,40 @@ public class SalaController {
 
         return ResponseEntity.ok(ocupados);
 
+    }
+
+    @PostMapping("{id}/layout/upload")
+    public ResponseEntity<SalaResponseDTO> uploadLayout(
+            @PathVariable Integer id,
+            @RequestParam("imagem") MultipartFile imagem,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        SalaResponseDTO response = salaService.uploadLayout(id, imagem, userDetails.getUsername());
+        return ResponseEntity.accepted().body(response);
+    }
+
+    @GetMapping("{id}/layout-preview")
+    public ResponseEntity<LayoutPreviewDTO> layoutPreview(@PathVariable Integer id) {
+        return ResponseEntity.ok(salaService.layoutPreview(id));
+    }
+
+    @PutMapping("{id}/layout")
+    public ResponseEntity<SalaResponseDTO> aprovarLayout(
+            @PathVariable Integer id,
+            @RequestBody AprovarLayoutDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        SalaResponseDTO response = salaService.aprovarLayout(id, dto, userDetails.getUsername());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("{id}/layout/resultado")
+    public ResponseEntity<Void> receberResultadoAgente(
+            @PathVariable Integer id,
+            @RequestBody AgentLayoutResultDTO dto) {
+
+        salaService.receberResultadoAgente(dto);
+        return ResponseEntity.noContent().build();
     }
 
 

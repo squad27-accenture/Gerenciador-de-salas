@@ -1,6 +1,7 @@
 package com.squad27.gerenciadorsalas.domain;
 
 import com.squad27.gerenciadorsalas.enums.EquipamentosSala;
+import com.squad27.gerenciadorsalas.enums.StatusLayout;
 import com.squad27.gerenciadorsalas.enums.StatusSala;
 import jakarta.persistence.*;
 import lombok.*;
@@ -39,6 +40,15 @@ public class Sala {
 
     @Column(name = "raio_proximidade", nullable = false)
     private Double raioProximidade = 5.0;
+
+    @Column(name = "imagem_url")
+    private String imagemUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_layout", nullable = false)
+    private StatusLayout statusLayout = StatusLayout.SEM_LAYOUT;
+
+
 
 
 

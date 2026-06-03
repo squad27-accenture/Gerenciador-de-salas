@@ -2,17 +2,22 @@ package com.squad27.gerenciadorsalas.services;
 
 import com.squad27.gerenciadorsalas.domain.Assento;
 import com.squad27.gerenciadorsalas.domain.Sala;
-import com.squad27.gerenciadorsalas.dto.AssentoReponseDTO;
-import com.squad27.gerenciadorsalas.dto.SalaDTO;
-import com.squad27.gerenciadorsalas.dto.SalaResponseDTO;
+import com.squad27.gerenciadorsalas.dto.*;
+import com.squad27.gerenciadorsalas.enums.StatusLayout;
 import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 @Service
@@ -187,4 +192,148 @@ public class SalaService {
                 ))
                 .toList();
     }
+
+    public SalaResponseDTO uploadLayout(Integer salaId, MultipartFile imagem, String emailUsuario) {
+        Sala sala = repository.findByIdAndDeletadoFalse(salaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
+
+        if (sala.getStatusLayout() == StatusLayout.AGUARDANDO_LAYOUT) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Sala já possui um layout em processamento.");
+        }
+
+        try {
+            String nomeArquivo = "sala_" + salaId + "_" + System.currentTimeMillis() + "_" + imagem.getOriginalFilename();
+            Path destino = Paths.get("uploads/layouts/" + nomeArquivo);
+            Files.createDirectories(destino.getParent());
+            Files.copy(imagem.getInputStream(), destino, StandardCopyOption.REPLACE_EXISTING);
+            sala.setImagemUrl(destino.toString());
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao salvar imagem.");
+        }
+
+        sala.setStatusLayout(StatusLayout.AGUARDANDO_LAYOUT);
+        Sala salva = repository.save(sala);
+
+        auditoriaService.registrar("UPLOAD_LAYOUT", "SALA", String.valueOf(salaId),
+                emailUsuario, "Imagem de layout enviada para processamento.");
+
+        return toResponseDTO(salva);
+    }
+
+    public LayoutPreviewDTO layoutPreview(Integer salaId) {
+        Sala sala = repository.findByIdAndDeletadoFalse(salaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
+
+        List<AssentoReponseDTO> assentos = assentoRepository.findBySalaIdOrderByPosicao(salaId)
+                .stream()
+                .map(a -> new AssentoReponseDTO(
+                        a.getId(),
+                        a.getPosicao(),
+                        a.getTipoAssento(),
+                        a.getCoordenadaX(),
+                        a.getCoordenadaY(),
+                        a.getTipoCadeira(),
+                        a.getTipoMesa(),
+                        a.getAtivo(),
+                        a.getEquipamentos().stream().map(Enum::name).toList()
+                ))
+                .toList();
+
+        return new LayoutPreviewDTO(
+                sala.getId(),
+                sala.getNome(),
+                sala.getStatusLayout(),
+                sala.getImagemUrl(),
+                assentos
+        );
+    }
+
+    public SalaResponseDTO aprovarLayout(Integer salaId, AprovarLayoutDTO dto, String emailUsuario) {
+        Sala sala = repository.findByIdAndDeletadoFalse(salaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
+
+        if (sala.getStatusLayout() != StatusLayout.LAYOUT_PENDENTE_VALIDACAO) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "O layout da sala não está pendente de validação.");
+        }
+
+        if (!dto.aprovado()) {
+            sala.setStatusLayout(StatusLayout.SEM_LAYOUT);
+            repository.save(sala);
+            auditoriaService.registrar("REJEICAO_LAYOUT", "SALA", String.valueOf(salaId),
+                    emailUsuario, "Layout rejeitado pelo administrador.");
+            return toResponseDTO(sala);
+        }
+
+        // Aplica ajustes manuais se houver (RF-05)
+        if (dto.assentos() != null && !dto.assentos().isEmpty()) {
+            for (AssentoLayoutDTO ajuste : dto.assentos()) {
+                assentoRepository.findBySalaIdAndPosicao(salaId, ajuste.posicao())
+                        .ifPresent(assento -> {
+                            if (ajuste.coordenadaX() != null) assento.setCoordenadaX(ajuste.coordenadaX());
+                            if (ajuste.coordenadaY() != null) assento.setCoordenadaY(ajuste.coordenadaY());
+                            if (ajuste.tipoAssento() != null) assento.setTipoAssento(ajuste.tipoAssento().trim().toUpperCase());
+                            if (ajuste.equipamentos() != null) assento.setEquipamentos(ajuste.equipamentos());
+                            assentoRepository.save(assento);
+                        });
+            }
+        }
+
+        sala.setStatusLayout(StatusLayout.ATIVA);
+        Sala salva = repository.save(sala);
+
+        auditoriaService.registrar("APROVACAO_LAYOUT", "SALA", String.valueOf(salaId),
+                emailUsuario, "Layout aprovado pelo administrador.");
+
+        return toResponseDTO(salva);
+    }
+
+    private SalaResponseDTO toResponseDTO(Sala sala) {
+        return new SalaResponseDTO(
+                sala.getId(),
+                sala.getNome(),
+                sala.getCapacidade(),
+                sala.getLocal(),
+                sala.getCidade(),
+                sala.getEstado(),
+                sala.getAndar(),
+                sala.getBloco()
+        );
+    }
+
+    public void receberResultadoAgente(AgentLayoutResultDTO dto) {
+        Sala sala = repository.findByIdAndDeletadoFalse(dto.salaId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
+
+        if (sala.getStatusLayout() != StatusLayout.AGUARDANDO_LAYOUT) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A sala não está aguardando processamento de layout.");
+        }
+
+        // Remove assentos gerados anteriormente se houver
+        List<Assento> assentosExistentes = assentoRepository.findBySalaIdOrderByPosicao(sala.getId());
+        assentoRepository.deleteAll(assentosExistentes);
+
+        // Cria os assentos com base no resultado do agente
+        for (AgentPosicaoDTO posicao : dto.posicoes()) {
+            Assento assento = new Assento();
+            assento.setSala(sala);
+            assento.setPosicao(posicao.posicao());
+            assento.setCoordenadaX(posicao.coordenadaX());
+            assento.setCoordenadaY(posicao.coordenadaY());
+            assento.setTipoAssento(posicao.tipoAssento() != null ? posicao.tipoAssento().trim().toUpperCase() : null);
+            assento.setEquipamentos(posicao.equipamentos() != null ? posicao.equipamentos() : List.of());
+            assento.setAtivo(true);
+            assentoRepository.save(assento);
+        }
+
+        sala.setStatusLayout(StatusLayout.LAYOUT_PENDENTE_VALIDACAO);
+        sala.setCapacidade(dto.posicoes().size());
+        repository.save(sala);
+
+        auditoriaService.registrar("RESULTADO_AGENTE", "SALA", String.valueOf(sala.getId()),
+                null, "Agente processou layout e gerou " + dto.posicoes().size() + " posições.");
+    }
+
+
 }
