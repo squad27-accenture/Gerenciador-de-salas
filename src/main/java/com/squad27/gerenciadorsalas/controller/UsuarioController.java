@@ -15,12 +15,12 @@ import java.util.List;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/v1/usuarios/")
+@RequestMapping("/api/v1/usuarios")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
-    @GetMapping("listarUsuarios")
+    @GetMapping
     public ResponseEntity<List<Usuario>> listarUsuarios(){
 
         var usuarios = usuarioService.listarUsuarios();
@@ -36,12 +36,10 @@ public class UsuarioController {
         return ResponseEntity.ok(usuario);
     }
 
-    @DeleteMapping("DeletarUsuario")
-    public ResponseEntity<String> deletarUsuarioPorId(@RequestParam Integer id){
-
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deletarUsuarioPorId(@PathVariable Integer id){
         usuarioService.deletarUsuarioPorId(id);
-
-        return ResponseEntity.ok("USUARIO DELETADO!");
+        return ResponseEntity.ok("Usuário deletado com sucesso.");
     }
 
     @DeleteMapping("deletarConta")
@@ -59,7 +57,7 @@ public class UsuarioController {
 
 
 
-    @PutMapping("atualizarConta")
+    @PutMapping
     public ResponseEntity<String> atualizarUsuarioPorId(@RequestBody UsuarioDTO usuarioDTO){
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

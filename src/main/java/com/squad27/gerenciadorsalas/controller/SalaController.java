@@ -17,7 +17,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/salas/")
+@RequestMapping("/api/v1/salas")
 
 public class SalaController {
 
@@ -28,7 +28,7 @@ public class SalaController {
     @Autowired
     ReservaService reservaService;
 
-    @PostMapping("CadastrarSala")
+    @PostMapping
     public ResponseEntity<SalaResponseDTO> cadastrarSala(
             @RequestBody SalaDTO salaDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -47,15 +47,15 @@ public class SalaController {
         ));
     }
 
-    @GetMapping("ListarSala")
+    @GetMapping
     public ResponseEntity<List<SalaResponseDTO>> listarSalas(){
         List<SalaResponseDTO> salas = salaService.listarSalas();
         return ResponseEntity.ok(salas);
     }
 
-    @DeleteMapping("DeletarSala")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarSalaPorId(
-            @RequestParam Integer id,
+            @PathVariable Integer id,
             @AuthenticationPrincipal UserDetails userDetails){
         salaService.deletarSalaPorId(id, userDetails.getUsername());
         return ResponseEntity.noContent().build();
@@ -66,9 +66,9 @@ public class SalaController {
         return ResponseEntity.ok(salaService.buscarSalaPorId(id));
     }
 
-    @PutMapping("AtualizarSala")
+    @PutMapping("/{id}")
     public ResponseEntity<String> atualizarSalaPorId(
-            @RequestParam Integer id,
+            @PathVariable Integer id,
             @RequestBody SalaDTO salaDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
 
