@@ -5,6 +5,7 @@ import com.squad27.gerenciadorsalas.domain.Reserva;
 import com.squad27.gerenciadorsalas.domain.Sala;
 import com.squad27.gerenciadorsalas.dto.OcupacaoResponseDTO;
 import com.squad27.gerenciadorsalas.enums.CriterioProximidade;
+import com.squad27.gerenciadorsalas.enums.Role;
 import com.squad27.gerenciadorsalas.enums.StatusReserva;
 import com.squad27.gerenciadorsalas.domain.Usuario;
 import com.squad27.gerenciadorsalas.dto.ReservaDTO;
@@ -224,8 +225,12 @@ public class ReservaService {
         Reserva reserva = reservaRepository.findById(reservaId)
                 .orElseThrow(() -> new RuntimeException("Reserva não encontrada"));
 
-        if (!reserva.getUsuario().getEmail().equals(emailUsuario)) {
-            throw new RuntimeException("Você não pode cancelar uma reserva de outro usuário");
+        Usuario solicitante = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
+        boolean isDono = reserva.getUsuario().getEmail().equals(emailUsuario);
+        boolean isGestor = solicitante.getRole() == Role.ADMIN || solicitante.getRole() == Role.TECHLEADER;
+
+        if (!isDono && !isGestor) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não tem permissão para cancelar esta reserva.");
         }
 
         reserva.setStatusReserva(StatusReserva.CANCELADA);
@@ -259,9 +264,13 @@ public class ReservaService {
             throw new RuntimeException("Reserva em grupo não encontrada");
         }
 
+        Usuario solicitante = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
+        boolean isGestor = solicitante.getRole() == Role.ADMIN || solicitante.getRole() == Role.TECHLEADER;
+
         for (Reserva reserva : reservas) {
-            if (!reserva.getUsuario().getEmail().equals(emailUsuario)) {
-                throw new RuntimeException("Você não pode cancelar uma reserva de outro usuário");
+            boolean isDono = reserva.getUsuario().getEmail().equals(emailUsuario);
+            if (!isDono && !isGestor) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não tem permissão para cancelar esta reserva.");
             }
             reserva.setStatusReserva(StatusReserva.CANCELADA);
             reserva.setMotivoCancelamento(motivo);

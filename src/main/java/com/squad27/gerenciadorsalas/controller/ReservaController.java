@@ -28,7 +28,7 @@ public class ReservaController {
     public ResponseEntity<ReservaResponseDTO> realizarReserva(@RequestBody ReservaDTO dto, @AuthenticationPrincipal UserDetails userDetails) {
 
         Reserva reserva = reservaService.ReservarAssento(dto, userDetails.getUsername());
-        return ResponseEntity.ok(new ReservaResponseDTO(reserva));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ReservaResponseDTO(reserva));
     }
 
     @PostMapping("reservaGrupo")
