@@ -54,11 +54,11 @@ public class SalaController {
     }
 
     @DeleteMapping("DeletarSala")
-    public ResponseEntity<String> deletarSalaPorId(
+    public ResponseEntity<Void> deletarSalaPorId(
             @RequestParam Integer id,
             @AuthenticationPrincipal UserDetails userDetails){
         salaService.deletarSalaPorId(id, userDetails.getUsername());
-        return ResponseEntity.ok("Sala deletada com SUCESSO!");
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("AtualizarSala")
