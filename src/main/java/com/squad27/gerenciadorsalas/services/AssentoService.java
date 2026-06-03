@@ -2,6 +2,7 @@ package com.squad27.gerenciadorsalas.services;
 
 import com.squad27.gerenciadorsalas.domain.Assento;
 import com.squad27.gerenciadorsalas.domain.Sala;
+import com.squad27.gerenciadorsalas.dto.AssentoReponseDTO;
 import com.squad27.gerenciadorsalas.dto.AssentoRequestDTO;
 import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
@@ -49,6 +50,42 @@ public class AssentoService {
         assento.setEquipamentos(dto.equipamentos() != null ? dto.equipamentos() : List.of());
 
         return assentoRepository.save(assento);
+    }
+
+    public List<AssentoReponseDTO> listarAssentos(Integer salaId) {
+        salaRepository.findById(salaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
+        return assentoRepository.findBySalaIdOrderByPosicao(salaId)
+                .stream()
+                .map(a -> new AssentoReponseDTO(
+                        a.getId(),
+                        a.getPosicao(),
+                        a.getTipoAssento(),
+                        a.getCoordenadaX(),
+                        a.getCoordenadaY(),
+                        a.getTipoCadeira(),
+                        a.getTipoMesa(),
+                        a.getAtivo(),
+                        a.getEquipamentos().stream().map(Enum::name).toList()
+                ))
+                .toList();
+    }
+
+    public AssentoReponseDTO buscarPorPosicao(Integer salaId, Integer posicao) {
+        Assento assento = assentoRepository.findBySalaIdAndPosicao(salaId, posicao)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Assento na posição " + posicao + " não encontrado na sala."));
+        return new AssentoReponseDTO(
+                assento.getId(),
+                assento.getPosicao(),
+                assento.getTipoAssento(),
+                assento.getCoordenadaX(),
+                assento.getCoordenadaY(),
+                assento.getTipoCadeira(),
+                assento.getTipoMesa(),
+                assento.getAtivo(),
+                assento.getEquipamentos().stream().map(Enum::name).toList()
+        );
     }
 
     public Assento atualizarAssento(Integer salaId, Integer posicao, AssentoRequestDTO dto) {

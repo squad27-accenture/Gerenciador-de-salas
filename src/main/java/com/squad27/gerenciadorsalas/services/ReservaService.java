@@ -59,7 +59,7 @@ public class ReservaService {
 
     public Reserva ReservarAssento(ReservaDTO dto, String emailUsuario) {
         Sala sala = salaRepository.findById(dto.salaId())
-                .orElseThrow(() -> new RuntimeException("Sala não encontrada"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
 
         Usuario usuario = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
 
@@ -138,7 +138,7 @@ public class ReservaService {
 
     public List<Reserva> reservaGrupo(ReservaGrupoDTO dto, String emailUsuario) {
         Sala sala = salaRepository.findById(dto.salaId())
-                .orElseThrow(() -> new RuntimeException("Sala não encontrada"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sala não encontrada."));
 
         Usuario usuario = usuarioRepository.findByEmail(emailUsuario).orElseThrow();
 
@@ -261,7 +261,7 @@ public class ReservaService {
         List<Reserva> reservas = reservaRepository.findByCodigoGrupo(codigoGrupo);
 
         if (reservas.isEmpty()) {
-            throw new RuntimeException("Reserva em grupo não encontrada");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva em grupo não encontrada.");
         }
 
         Usuario solicitante = usuarioRepository.findByEmail(emailUsuario).orElseThrow();

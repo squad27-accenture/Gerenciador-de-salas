@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/salas/{salaId}/assentos")
 public class AssentoController {
@@ -53,6 +55,18 @@ public class AssentoController {
 
         Assento assento = assentoService.reativarAssento(salaId, posicao);
         return ResponseEntity.ok(toDTO(assento));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<AssentoReponseDTO>> listar(@PathVariable Integer salaId) {
+        return ResponseEntity.ok(assentoService.listarAssentos(salaId));
+    }
+
+    @GetMapping("/{posicao}")
+    public ResponseEntity<AssentoReponseDTO> buscarPorPosicao(
+            @PathVariable Integer salaId,
+            @PathVariable Integer posicao) {
+        return ResponseEntity.ok(assentoService.buscarPorPosicao(salaId, posicao));
     }
 
     private AssentoReponseDTO toDTO(Assento assento) {

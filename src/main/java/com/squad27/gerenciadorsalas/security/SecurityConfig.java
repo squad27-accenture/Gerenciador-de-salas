@@ -82,6 +82,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,   "/api/v1/salas/CadastrarSala").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT,    "/api/v1/salas/AtualizarSala").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/salas/DeletarSala").hasRole("ADMIN")
+                        // Salas - exigem autenticado
+                        .requestMatchers(HttpMethod.GET, "/api/v1/salas/*").authenticated()
                         // Layout — upload, preview e aprovação exigem ADMIN
                         .requestMatchers(HttpMethod.POST, "/api/v1/salas/*/layout/upload").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET,  "/api/v1/salas/*/layout-preview").hasRole("ADMIN")
