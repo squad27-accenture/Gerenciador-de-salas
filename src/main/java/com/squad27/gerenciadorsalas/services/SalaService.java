@@ -4,6 +4,7 @@ import com.squad27.gerenciadorsalas.domain.Assento;
 import com.squad27.gerenciadorsalas.domain.Sala;
 import com.squad27.gerenciadorsalas.dto.*;
 import com.squad27.gerenciadorsalas.enums.StatusLayout;
+import com.squad27.gerenciadorsalas.messaging.LayoutProducer;
 import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
 import jakarta.transaction.Transactional;
@@ -26,12 +27,14 @@ public class SalaService {
     private final SalaRepository repository;
     private final AssentoRepository assentoRepository;
     private final AuditoriaService auditoriaService;
+    private final LayoutProducer layoutProducer;
 
     public SalaService(SalaRepository repository, AssentoRepository assentoRepository,
-                       AuditoriaService auditoriaService) {
+                       AuditoriaService auditoriaService, LayoutProducer layoutProducer) {
         this.repository = repository;
         this.assentoRepository = assentoRepository;
         this.auditoriaService = auditoriaService;
+        this.layoutProducer = layoutProducer;
     }
 
     public Sala cadastrarsala(SalaDTO salaDTO, String emailUsuario){
@@ -213,6 +216,14 @@ public class SalaService {
 
         sala.setStatusLayout(StatusLayout.AGUARDANDO_LAYOUT);
         Sala salva = repository.save(sala);
+
+// Publica mensagem na fila para o agente de IA processar
+        LayoutProcessingMessageDTO mensagem = new LayoutProcessingMessageDTO(
+                salva.getId(),
+                salva.getImagemUrl(),
+                "/api/v1/salas/" + salva.getId() + "/layout/resultado"
+        );
+        layoutProducer.publicarProcessamentoLayout(mensagem);
 
         auditoriaService.registrar("UPLOAD_LAYOUT", "SALA", String.valueOf(salaId),
                 emailUsuario, "Imagem de layout enviada para processamento.");
