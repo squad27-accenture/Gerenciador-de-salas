@@ -5,11 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.squad27.gerenciadorsalas.domain.*;
 import com.squad27.gerenciadorsalas.dto.ReservaDTO;
 import com.squad27.gerenciadorsalas.dto.ReservaGrupoDTO;
-import com.squad27.gerenciadorsalas.enums.CriterioProximidade;
-import com.squad27.gerenciadorsalas.enums.DiaSemana;
-import com.squad27.gerenciadorsalas.enums.Role;
-import com.squad27.gerenciadorsalas.enums.StatusReserva;
-import com.squad27.gerenciadorsalas.enums.StatusSala;
+import com.squad27.gerenciadorsalas.enums.*;
 import com.squad27.gerenciadorsalas.repositories.*;
 import com.squad27.gerenciadorsalas.security.TokenService;
 import com.squad27.gerenciadorsalas.services.NotificacaoEmailService;
@@ -86,10 +82,10 @@ public class ReservaIntegrationTest {
         Assento a2 = new Assento(); a2.setSala(sala); a2.setPosicao(2); a2.setAtivo(true);
         assentoRepository.saveAll(List.of(a1, a2));
 
-        usuario = new Usuario("user@teste.com", passwordEncoder.encode("senha"), Role.USER, "User Teste");
+        usuario = new Usuario("user@teste.com", passwordEncoder.encode("senha"), Role.USER, "User Teste", TipoFuncionario.OUTRO);
         usuario = usuarioRepository.save(usuario);
 
-        outroUsuario = new Usuario("outro@teste.com", passwordEncoder.encode("senha"), Role.USER, "Outro");
+        outroUsuario = new Usuario("outro@teste.com", passwordEncoder.encode("senha"), Role.USER, "Outro", TipoFuncionario.OUTRO);
         outroUsuario = usuarioRepository.save(outroUsuario);
 
         tokenUsuario      = "Bearer " + tokenService.generateToken(usuario);
@@ -205,7 +201,7 @@ public class ReservaIntegrationTest {
     @Test
     @DisplayName("Reserva em grupo: sucesso — retorna lista com mesmo codigoGrupo")
     void reservaGrupo_sucesso() throws Exception {
-        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H10, AMANHA, sala.getId(),
+        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H10, AMANHA, sala.getId(),10,
                 List.of(List.of(), List.of()), CriterioProximidade.NENHUM);
 
         String responseJson = mockMvc.perform(post("/api/v1/reserva/reservaGrupo")
@@ -229,7 +225,7 @@ public class ReservaIntegrationTest {
         reservaExistente(1, AMANHA, H9, H10);
         reservaExistente(2, AMANHA, H9, H10);
 
-        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H10, AMANHA, sala.getId(),
+        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H10, AMANHA, sala.getId(), 10,
                 List.of(List.of(), List.of()), CriterioProximidade.NENHUM);
 
         mockMvc.perform(post("/api/v1/reserva/reservaGrupo")

@@ -4,6 +4,7 @@ import com.squad27.gerenciadorsalas.domain.Assento;
 import com.squad27.gerenciadorsalas.domain.Sala;
 import com.squad27.gerenciadorsalas.enums.EquipamentosAssento;
 import com.squad27.gerenciadorsalas.enums.StatusSala;
+import com.squad27.gerenciadorsalas.enums.TipoFuncionario;
 import com.squad27.gerenciadorsalas.repositories.AssentoRepository;
 import com.squad27.gerenciadorsalas.repositories.SalaRepository;
 import com.squad27.gerenciadorsalas.domain.Usuario;
@@ -77,7 +78,7 @@ public class AssentoIntegrationTest {
 
         assentoRepository.saveAll(List.of(a1, a2, a3));
 
-        Usuario user = new Usuario("user@test.com", passwordEncoder.encode("123"), Role.USER, "Tester");
+        Usuario user = new Usuario("user@test.com", passwordEncoder.encode("123"), Role.USER, "Tester", TipoFuncionario.PROGRAMADOR);
         user = usuarioRepository.save(user);
         token = "Bearer " + tokenService.generateToken(user);
     }

@@ -12,7 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
+import com.squad27.gerenciadorsalas.dto.ConfirmarReservaOpcaoDTO;
+import com.squad27.gerenciadorsalas.dto.OpcoesReservaResponseDTO;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
@@ -82,5 +83,36 @@ public class ReservaController {
             @RequestParam LocalDate dataFim
     ) {
         return ResponseEntity.ok(reservaService.relatórioOcupacao(salaId, dataInicio, dataFim));
+    }
+
+    @PostMapping("/opcoes")
+    public ResponseEntity<OpcoesReservaResponseDTO> gerarOpcoesIndividual(
+            @RequestBody ReservaDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return ResponseEntity.ok(
+                reservaService.gerarOpcoesIndividual(dto, userDetails.getUsername())
+        );
+    }
+
+    @PostMapping("/grupo/opcoes")
+    public ResponseEntity<OpcoesReservaResponseDTO> gerarOpcoesGrupo(
+            @RequestBody ReservaGrupoDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return ResponseEntity.ok(
+                reservaService.gerarOpcoesGrupo(dto, userDetails.getUsername())
+        );
+    }
+
+    @PostMapping("/confirmar-opcao")
+    public ResponseEntity<List<ReservaResponseDTO>> confirmarOpcao(
+            @RequestBody ConfirmarReservaOpcaoDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        List<Reserva> reservas = reservaService.confirmarOpcao(dto, userDetails.getUsername());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(reservas.stream().map(ReservaResponseDTO::new).toList());
     }
 }

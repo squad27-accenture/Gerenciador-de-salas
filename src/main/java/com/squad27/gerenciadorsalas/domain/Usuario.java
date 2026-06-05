@@ -1,6 +1,7 @@
 package com.squad27.gerenciadorsalas.domain;
 
 import com.squad27.gerenciadorsalas.enums.Role;
+import com.squad27.gerenciadorsalas.enums.TipoFuncionario;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,39 +20,54 @@ import java.util.List;
 @EqualsAndHashCode(of = "id")
 @Builder
 public class Usuario implements UserDetails {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
     private String email;
+
     private String senha;
+
     @Enumerated(EnumType.STRING)
     private Role role;
+
     private String username;
 
     @Column(nullable = false)
     private Boolean deletado = false;
 
-    public Usuario(String email, String senha, Role role, String username){
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_funcionario", nullable = false)
+    private TipoFuncionario tipoFuncionario;
+
+    public Usuario(String email, String senha, Role role, String username, TipoFuncionario tipoFuncionario) {
         this.email = email;
         this.senha = senha;
         this.role = role;
         this.username = username;
+        this.tipoFuncionario = tipoFuncionario;
+        this.deletado = false;
     }
+
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities(){
-        if (this.role == Role.ADMIN)
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (this.role == Role.ADMIN) {
             return List.of(
                     new SimpleGrantedAuthority("ROLE_ADMIN"),
                     new SimpleGrantedAuthority("ROLE_USER"),
                     new SimpleGrantedAuthority("ROLE_TECHLEADER")
             );
-        if(this.role == Role.TECHLEADER)
+        }
+
+        if (this.role == Role.TECHLEADER) {
             return List.of(
                     new SimpleGrantedAuthority("ROLE_USER"),
                     new SimpleGrantedAuthority("ROLE_TECHLEADER")
             );
-        else
-            return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        }
+
+        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override
@@ -63,5 +79,4 @@ public class Usuario implements UserDetails {
     public String getUsername() {
         return email;
     }
-
 }

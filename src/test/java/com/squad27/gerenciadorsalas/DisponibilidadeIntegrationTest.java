@@ -74,7 +74,7 @@ public class DisponibilidadeIntegrationTest {
         Assento a2 = new Assento(); a2.setSala(sala); a2.setPosicao(2); a2.setAtivo(true);
         assentoRepository.saveAll(List.of(a1, a2));
 
-        usuario = new Usuario("u@disp.com", passwordEncoder.encode("123"), Role.USER, "Disp Tester");
+        usuario = new Usuario("u@disp.com", passwordEncoder.encode("123"), Role.USER, "Disp Tester", TipoFuncionario.OUTRO);
         usuario = usuarioRepository.save(usuario);
         token = "Bearer " + tokenService.generateToken(usuario);
     }

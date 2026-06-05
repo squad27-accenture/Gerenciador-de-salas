@@ -23,17 +23,32 @@ public class AuthorizationService implements UserDetailsService {
         return Repository.findByEmail(email).orElseThrow();
     }
 
-    public Usuario cadastro(RegisterDTO registerDTO){
-        if(Repository.existsByEmail(registerDTO.email()))
-        {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Uma conta com esse email ja foi criado!");
+    public Usuario cadastro(RegisterDTO registerDTO) {
+        if (Repository.existsByEmail(registerDTO.email())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Uma conta com esse email ja foi criado!"
+            );
+        }
+
+        if (registerDTO.tipoFuncionario() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "O tipo de funcionário é obrigatório."
+            );
         }
 
         String senhaEncriptada = new BCryptPasswordEncoder().encode(registerDTO.senha());
-        Usuario novousuario = new Usuario(registerDTO.email(), senhaEncriptada, registerDTO.role(), registerDTO.username());
+
+        Usuario novousuario = new Usuario(
+                registerDTO.email(),
+                senhaEncriptada,
+                registerDTO.role(),
+                registerDTO.username(),
+                registerDTO.tipoFuncionario()
+        );
 
         return Repository.save(novousuario);
-
     }
 
 }

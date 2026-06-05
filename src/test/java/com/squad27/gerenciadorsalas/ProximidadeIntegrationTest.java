@@ -79,7 +79,7 @@ public class ProximidadeIntegrationTest {
         Assento a4 = assento(sala, 4, "ESTACAO_PADRAO", 20.0, 20.0);
         assentoRepository.saveAll(List.of(a1, a2, a3, a4));
 
-        Usuario user = new Usuario("user@prox.com", passwordEncoder.encode("123"), Role.USER, "Tester");
+        Usuario user = new Usuario("user@prox.com", passwordEncoder.encode("123"), Role.USER, "Tester", TipoFuncionario.OUTRO);
         user = usuarioRepository.save(user);
         token = "Bearer " + tokenService.generateToken(user);
     }
@@ -87,7 +87,7 @@ public class ProximidadeIntegrationTest {
     @Test
     @DisplayName("Proximidade OBRIGATORIA: assentos próximos disponíveis → confirma")
     void proximidadeObrigatoria_sucesso() throws Exception {
-        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H11, AMANHA, sala.getId(),
+        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H11, AMANHA, sala.getId(), 10,
                 List.of(List.of("ESTACAO_PADRAO"), List.of("ESTACAO_PADRAO")),
                 CriterioProximidade.OBRIGATORIA);
 
@@ -101,7 +101,7 @@ public class ProximidadeIntegrationTest {
     @Test
     @DisplayName("Proximidade OBRIGATORIA: tipos em assentos distantes → rejeita 409")
     void proximidadeObrigatoria_rejeita_quandoDistantes() throws Exception {
-        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H11, AMANHA, sala.getId(),
+        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H11, AMANHA, sala.getId(),10,
                 List.of(List.of("ESTACAO_PADRAO"), List.of("ESTACAO_EXECUTIVA")),
                 CriterioProximidade.OBRIGATORIA);
 
@@ -116,7 +116,7 @@ public class ProximidadeIntegrationTest {
     @Test
     @DisplayName("Proximidade PREFERENCIAL: aloca mesmo sem proximidade ideal")
     void proximidadePreferencial_alocaMesmoDistante() throws Exception {
-        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H11, AMANHA, sala.getId(),
+        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H11, AMANHA, sala.getId(),10,
                 List.of(List.of("ESTACAO_PADRAO"), List.of("ESTACAO_EXECUTIVA")),
                 CriterioProximidade.PREFERENCIAL);
 
@@ -130,7 +130,7 @@ public class ProximidadeIntegrationTest {
     @Test
     @DisplayName("Tipo inexistente na sala → rejeita 409 com TIPO_ASSENTO_INDISPONIVEL")
     void tipoInexistente_rejeita() throws Exception {
-        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H11, AMANHA, sala.getId(),
+        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H11, AMANHA, sala.getId(),100,
                 List.of(List.of("HOT_DESK")),
                 CriterioProximidade.NENHUM);
 
@@ -148,7 +148,7 @@ public class ProximidadeIntegrationTest {
         sala.setRaioProximidade(0.5);
         salaRepository.save(sala);
 
-        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H11, AMANHA, sala.getId(),
+        ReservaGrupoDTO dto = new ReservaGrupoDTO(H9, H11, AMANHA, sala.getId(),10,
                 List.of(List.of("ESTACAO_PADRAO"), List.of("ESTACAO_PADRAO")),
                 CriterioProximidade.OBRIGATORIA);
 

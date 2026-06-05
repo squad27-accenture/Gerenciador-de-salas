@@ -12,6 +12,9 @@ public record ReservaGrupoDTO(
         LocalTime horarioFim,
         LocalDate dataReserva,
         Integer salaId,
+        Integer quantidadePessoas,
         List<List<String>> tiposPreferidosPorPessoa, // cada índice = uma pessoa, até 3 tipos
         CriterioProximidade criterioProximidade
+
+
 ) {}
