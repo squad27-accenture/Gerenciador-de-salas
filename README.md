@@ -1,284 +1,620 @@
-# 🏢 Gerenciador de Salas
+# 🏢 Gerenciador de Salas — RoomFlow
 
-API desenvolvida para resolver a dificuldade de coordenar o uso de salas e assentos em empresas no modelo híbrido. Permite consultar disponibilidade de espaços, realizar reservas e conta com IA para recomendar a melhor opção conforme a necessidade do usuário.
+Sistema completo para gerenciamento de salas, assentos, reservas individuais e reservas em grupo em ambientes corporativos híbridos.
+
+O projeto permite que usuários consultem salas disponíveis, visualizem assentos, realizem reservas, acompanhem histórico, participem de grupos, recebam convites e usem uma análise inteligente para encontrar as melhores salas e assentos conforme perfil dos integrantes do grupo.
 
 ---
 
 ## 🚀 Tecnologias Utilizadas
 
-- **Java 21**
-- **Spring Boot 4.0.5**
-- **Spring Security** com autenticação JWT
-- **Spring Data JPA** + **Hibernate**
-- **PostgreSQL**
-- **Flyway** (migrations)
-- **Lombok**
-- **Auth0 Java JWT 4.5.2**
-- **Spring Mail** (recuperação de senha via e-mail)
-- **SpringDoc OpenAPI 3.0.3** (Swagger UI)
+### Backend
+
+* **Java 21**
+* **Spring Boot**
+* **Spring Security**
+* **JWT Bearer Token**
+* **Spring Data JPA**
+* **Hibernate**
+* **PostgreSQL**
+* **Flyway**
+* **Lombok**
+* **Auth0 Java JWT**
+* **SpringDoc OpenAPI / Swagger**
+* **Spring Mail** para recuperação de senha
+
+### Frontend
+
+* **HTML**
+* **CSS**
+* **JavaScript puro**
+* Dashboard administrativo
+* Telas de salas, reservas, calendário, grupos, usuários, IA, relatórios e configurações
+* Geração de PDF no relatório com `html2canvas` e `jsPDF`
 
 ---
 
-## 📁 Estrutura do Projeto
+## 🎯 Objetivo do Projeto
 
-```
-src/
-├── controller/
-│   ├── AuthController.java
-│   ├── PasswordResetController.java
-│   ├── ReservaController.java
-│   ├── SalaController.java
-│   └── UsuarioController.java
-├── domain/
-│   ├── Assento.java
-│   ├── EquipamentosAssento.java
-│   ├── EquipamentosSala.java
-│   ├── PasswordResetToken.java
-│   ├── RefreshToken.java
-│   ├── Reserva.java
-│   ├── Role.java
-│   ├── Sala.java
-│   ├── StatusReserva.java
-│   ├── StatusSala.java
-│   └── Usuario.java
-├── dto/
-│   ├── AssentoReponseDTO.java
-│   ├── AuthorizationDTO.java
-│   ├── LoginResponse.java
-│   ├── RedefinirSenhaDTO.java
-│   ├── RegisterDTO.java
-│   ├── ReservaDTO.java
-│   ├── ReservaGrupoDTO.java
-│   ├── SalaDTO.java
-│   ├── SolicitarRecuperacaoDTO.java
-│   ├── UsuarioDTO.java
-│   └── UsuarioResponseDTO.java
-├── exception/
-│   └── GlobalExceptionHandler.java
-├── repositories/
-│   ├── AssentoRepository.java
-│   ├── PasswordResetTokenRepository.java
-│   ├── RefreshTokenRepository.java
-│   ├── ReservaRepository.java
-│   ├── SalaRepository.java
-│   └── UsuarioRepository.java
-├── security/
-│   ├── SecurityConfig.java
-│   ├── SecurityFilter.java
-│   └── TokenService.java
-└── services/
-    ├── AuthorizationService.java
-    ├── PasswordResetService.java
-    ├── RefreshTokenService.java
-    ├── ReservaService.java
-    ├── SalaService.java
-    └── UsuarioService.java
-```
+O RoomFlow resolve a dificuldade de coordenar o uso de salas e assentos em empresas com modelo híbrido.
+
+A aplicação permite:
+
+* Cadastrar e gerenciar salas
+* Visualizar salas por capacidade, localidade e status
+* Consultar assentos e equipamentos de cada sala
+* Reservar assentos individualmente
+* Cancelar reservas
+* Visualizar histórico de reservas
+* Gerenciar grupos de usuários
+* Convidar integrantes por e-mail
+* Aceitar ou recusar convites
+* Recomendar salas e assentos com IA/análise inteligente
+* Gerar relatórios visuais e exportar PDF
+
+---
+
+## 👥 Perfis de Acesso
+
+| Perfil       | Permissões principais                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------- |
+| `ADMIN`      | Acesso total ao sistema. Pode gerenciar salas, usuários, grupos, reservas, relatórios e configurações gerais. |
+| `TECHLEADER` | Pode gerenciar seu próprio grupo, convidar usuários por e-mail e usar a IA para reservas em grupo.            |
+| `USER`       | Pode visualizar salas, reservas, calendário, grupos em que participa e convites recebidos.                    |
 
 ---
 
 ## 🔐 Autenticação
 
-A API utiliza autenticação via **JWT (Bearer Token)**. Para acessar os endpoints protegidos, é necessário fazer login e incluir o token no header `Authorization`.
+A API utiliza autenticação via **JWT Bearer Token**.
 
-### Roles disponíveis
+Após o login, o frontend salva o token e envia nas requisições protegidas:
 
-| Role | Permissões |
-|------|-----------|
-| `ADMIN` | Acesso total (criar, editar, deletar salas e usuários) |
-| `TECHLEADER` | Acesso a funcionalidades de liderança |
-| `USER` | Consulta e reserva de salas |
+```http
+Authorization: Bearer SEU_TOKEN_AQUI
+```
 
----
+### Login
 
-## 📋 Endpoints
+```http
+POST /api/v1/auth/login
+```
 
-### 🔑 Auth — `/auth`
+Body:
 
-| Método | Rota | Descrição | Autenticação |
-|--------|------|-----------|-------------|
-| POST | `/auth/login` | Login e geração de token JWT | ❌ |
-| POST | `/auth/cadastro` | Cadastro de novo usuário | ❌ |
-| POST | `/auth/recuperar-senha` | Solicita código de recuperação de senha por e-mail | ❌ |
-| POST | `/auth/redefinir-senha` | Redefine a senha usando o código recebido | ❌ |
-
-**Login — Body:**
 ```json
 {
-  "email": "admin@empresa.com",
-  "senha": "senha123"
+  "email": "admin@teste.com",
+  "senha": "123456"
 }
 ```
 
-**Resposta:**
+Resposta esperada:
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9..."
 }
 ```
 
-**Solicitar recuperação de senha — Body:**
-```json
-{
-  "email": "usuario@empresa.com"
-}
+### Cadastro
+
+```http
+POST /api/v1/auth/cadastro
 ```
 
-**Redefinir senha — Body:**
+Body:
+
 ```json
 {
   "email": "usuario@empresa.com",
-  "codigo": "123456",
-  "novaSenha": "novaSenha123"
+  "senha": "123456",
+  "username": "Nome do Usuário",
+  "role": "USER",
+  "tipoFuncionario": "PROGRAMADOR"
 }
 ```
 
 ---
 
-### 🏠 Salas — `/salas`
+## 🧑‍💼 Tipos de Funcionário
 
-| Método | Rota | Descrição | Role necessária |
-|--------|------|-----------|----------------|
-| GET | `/salas/ListarSala` | Lista todas as salas | Autenticado |
-| POST | `/salas/CadastrarSala` | Cadastra nova sala | ADMIN |
-| PUT | `/salas/AtualizarSala?id={id}` | Atualiza sala por ID | Autenticado |
-| DELETE | `/salas/DeletarSala?id={id}` | Deleta sala por ID | ADMIN |
-| GET | `/salas/{id}/assentos` | Lista os assentos de uma sala | Autenticado |
-| GET | `/salas/ocupados` | Retorna assentos ocupados em um intervalo de tempo | Autenticado |
+O sistema usa o tipo de funcionário para melhorar recomendações de assentos e salas.
 
-**Cadastrar/Atualizar sala — Body:**
+Tipos disponíveis:
+
+```txt
+PROGRAMADOR
+DESIGNER
+QA
+SUPORTE
+GESTOR
+OUTRO
+```
+
+Exemplo de uso:
+
+* `PROGRAMADOR` pode priorizar assentos com computador
+* `DESIGNER` pode priorizar monitor 4K
+* `QA` pode priorizar setup completo
+* `GESTOR` pode priorizar sala de reunião ou assentos próximos
+
+---
+
+## 🏠 Salas
+
+As salas possuem dados de localização, capacidade e estrutura.
+
+Campos principais:
+
+```txt
+id
+nome
+capacidade
+local
+cidade
+estado
+andar
+bloco
+statusSala
+raioProximidade
+```
+
+### Endpoints de Salas
+
+| Método   | Endpoint                              | Descrição                                     | Acesso      |
+| -------- | ------------------------------------- | --------------------------------------------- | ----------- |
+| `GET`    | `/api/v1/salas`                       | Lista todas as salas                          | Autenticado |
+| `GET`    | `/api/v1/salas/{id}`                  | Busca uma sala por ID                         | Autenticado |
+| `POST`   | `/api/v1/salas`                       | Cadastra uma nova sala                        | ADMIN       |
+| `PUT`    | `/api/v1/salas/{id}`                  | Atualiza uma sala                             | ADMIN       |
+| `DELETE` | `/api/v1/salas/{id}`                  | Remove uma sala                               | ADMIN       |
+| `GET`    | `/api/v1/salas/ocupados`              | Retorna assentos ocupados em uma data/horário | Autenticado |
+| `POST`   | `/api/v1/salas/{id}/layout/upload`    | Envia imagem/layout da sala                   | ADMIN       |
+| `GET`    | `/api/v1/salas/{id}/layout-preview`   | Visualiza layout processado                   | ADMIN       |
+| `PUT`    | `/api/v1/salas/{id}/layout`           | Aprova layout da sala                         | ADMIN       |
+| `POST`   | `/api/v1/salas/{id}/layout/resultado` | Recebe resultado do agente de layout          | ADMIN       |
+
+### Exemplo de cadastro de sala
+
 ```json
 {
-  "nome": "Sala de Reunião A",
-  "capacidade": 10,
+  "nome": "Sala Olimpo",
+  "capacidade": 12,
+  "local": "Prédio Principal",
+  "cidade": "São Paulo",
+  "estado": "SP",
+  "andar": "5",
+  "bloco": "A",
   "statusSala": "DISPONIVEL",
-  "local": "Bloco A - 2º Andar"
+  "raioProximidade": 5.0
 }
-```
-
-**Status disponíveis:** `DISPONIVEL`, `INDISPONIVEL`, `MANUTENCAO`
-
-**Buscar assentos ocupados — Query Params:**
-```
-salaId=1&dataReserva=2025-06-01&horarioInicio=09:00&horarioFim=11:00
 ```
 
 ---
 
-### 📅 Reservas — `/reserva`
+## 💺 Assentos e Equipamentos
 
-| Método | Rota | Descrição | Autenticação |
-|--------|------|-----------|-------------|
-| POST | `/reserva/realizarReserva` | Realiza reserva de um assento | ✅ |
-| POST | `/reserva/reservaGrupo` | Realiza reserva de múltiplos assentos para um grupo | ✅ |
-| PUT | `/reserva/{id}/cancelar` | Cancela uma reserva individual | ✅ |
-| PUT | `/reserva/grupo/{codigoGrupo}/cancelar` | Cancela todas as reservas de um grupo | ✅ |
+Cada sala pode possuir diversos assentos. Cada assento pode ter equipamentos diferentes.
 
-**Realizar reserva — Body:**
+Exemplos de equipamentos:
+
+```txt
+COMPUTADOR
+MONITOR
+MONITOR_4K
+HEADSET
+WEBCAM
+MESA_ADAPTADA
+OUTRO
+```
+
+A tela de salas permite abrir uma sala e visualizar os assentos como um mapa, parecido com cinema, mostrando:
+
+* Posição do assento
+* Disponibilidade
+* Equipamentos
+* Botão de reservar
+* Status ocupado/livre
+
+---
+
+## 📅 Reservas
+
+O sistema permite reservas individuais e reservas em grupo.
+
+### Endpoints de Reservas
+
+| Método | Endpoint                                        | Descrição                                     | Acesso      |
+| ------ | ----------------------------------------------- | --------------------------------------------- | ----------- |
+| `POST` | `/api/v1/reservas`                              | Realiza reserva individual                    | Autenticado |
+| `POST` | `/api/v1/reservas/confirmar-opcao`              | Confirma opção gerada pela IA                 | Autenticado |
+| `PUT`  | `/api/v1/reservas/{id}/cancelar`                | Cancela reserva individual                    | Autenticado |
+| `PUT`  | `/api/v1/reservas/grupo/{codigoGrupo}/cancelar` | Cancela reservas de um grupo                  | Autenticado |
+| `GET`  | `/api/v1/reservas/historico`                    | Lista histórico de reservas do usuário logado | Autenticado |
+| `GET`  | `/api/v1/reservas/ocupacao`                     | Relatório de ocupação por sala/período        | ADMIN       |
+
+### Reserva individual
+
 ```json
 {
-  "horarioInicio": "09:00",
-  "horarioFim": "11:00",
-  "dataReserva": "2025-06-01",
+  "horarioInicio": "10:00",
+  "horarioFim": "12:00",
+  "dataReserva": "2026-06-08",
   "posicaoAssento": 3,
   "salaId": 1
 }
 ```
 
-**Reserva em grupo — Body:**
-```json
-{
-  "horarioInicio": "09:00",
-  "horarioFim": "11:00",
-  "dataReserva": "2025-06-01",
-  "salaId": 1,
-  "posicoesAssentos": [1, 2, 3]
-}
-```
+### Cancelar reserva
 
-**Status de reserva disponíveis:** `EmANDAMENTO`, `FINALIZADA`, `CANCELADA`
+```http
+PUT /api/v1/reservas/{id}/cancelar?motivo=Cancelada pelo usuário
+```
 
 ---
 
-### 👤 Usuários — `/usuarios`
+## 👥 Grupos
 
-| Método | Rota | Descrição | Role necessária |
-|--------|------|-----------|----------------|
-| GET | `/usuarios/listarUsuarios` | Lista todos os usuários | Autenticado |
-| GET | `/usuarios/buscar?id={id}` | Busca dados de um usuário por ID | Autenticado |
-| PUT | `/usuarios/atualizarConta` | Atualiza dados do usuário autenticado | Autenticado |
-| DELETE | `/usuarios/DeletarUsuario?id={id}` | Deleta usuário por ID | ADMIN |
-| DELETE | `/usuarios/deletarConta` | Deleta a própria conta do usuário autenticado | Autenticado |
+A funcionalidade de grupos permite que Tech Leaders e Admins organizem equipes para reservas em conjunto.
 
-**Atualizar usuário — Body:**
+Regras principais:
+
+* `ADMIN` pode visualizar e alterar todos os grupos
+* `TECHLEADER` só vê e gerencia o próprio grupo
+* `USER` apenas visualiza o grupo em que está
+* Usuário comum não altera grupo
+* Integrantes entram por convite
+* Convites podem ser aceitos ou recusados
+* Integrantes ficam ocultos no card e aparecem ao clicar em **Ver integrantes**
+
+### Endpoints de Grupos
+
+| Método   | Endpoint                               | Descrição                                  | Acesso                 |
+| -------- | -------------------------------------- | ------------------------------------------ | ---------------------- |
+| `POST`   | `/api/v1/grupos`                       | Cria grupo                                 | ADMIN / TECHLEADER     |
+| `GET`    | `/api/v1/grupos`                       | Lista grupos conforme permissão do usuário | Autenticado            |
+| `GET`    | `/api/v1/grupos/{id}`                  | Busca grupo por ID                         | Autenticado            |
+| `PUT`    | `/api/v1/grupos/{id}`                  | Edita grupo                                | ADMIN / líder do grupo |
+| `DELETE` | `/api/v1/grupos/{id}`                  | Remove grupo                               | ADMIN / líder do grupo |
+| `POST`   | `/api/v1/grupos/{id}/convites`         | Envia convite por e-mail                   | ADMIN / líder do grupo |
+| `GET`    | `/api/v1/grupos/convites/me`           | Lista meus convites                        | Autenticado            |
+| `POST`   | `/api/v1/grupos/convites/{id}/aceitar` | Aceita convite                             | Autenticado            |
+| `POST`   | `/api/v1/grupos/convites/{id}/recusar` | Recusa convite                             | Autenticado            |
+
+### Criar grupo
+
 ```json
 {
-  "email": "novo@empresa.com",
-  "senha": "novasenha123",
-  "username": "novousername",
-  "role": "USER"
+  "nome": "Squad Backend",
+  "descricao": "Equipe responsável pelo backend",
+  "liderId": 1,
+  "usuariosIds": [2, 3, 4]
 }
 ```
 
-**Roles disponíveis:** `ADMIN`, `TECHLEADER`, `USER`
+### Convidar usuário
+
+```http
+POST /api/v1/grupos/{id}/convites
+```
+
+```json
+{
+  "email": "dev@empresa.com"
+}
+```
+
+---
+
+## 🤖 IA / Análise Inteligente
+
+A IA do sistema funciona como um analisador de opções de reserva.
+
+Ela considera:
+
+* Grupo selecionado
+* Quantidade de integrantes
+* Tipo de funcionário de cada integrante
+* Data
+* Horário inicial
+* Horário final
+* Critério de proximidade
+* Equipamentos dos assentos
+* Capacidade da sala
+* Disponibilidade dos assentos
+* Compatibilidade mínima recomendada
+
+Critérios de proximidade:
+
+```txt
+OBRIGATORIO
+PREFERENCIAL
+NENHUM
+```
+
+Exemplo de fluxo:
+
+1. Usuário escolhe grupo
+2. Escolhe data e horário
+3. Define se os assentos precisam estar próximos
+4. IA analisa salas e assentos disponíveis
+5. Sistema retorna opções com compatibilidade em porcentagem
+6. Usuário confirma uma opção
+7. Backend cria as reservas em grupo
+
+### Endpoint de opções da IA
+
+```http
+POST /api/v1/ia/opcoes
+```
+
+Exemplo de body:
+
+```json
+{
+  "grupoId": 1,
+  "dataReserva": "2026-06-08",
+  "horarioInicio": "10:00",
+  "horarioFim": "12:00",
+  "criterioProximidade": "PREFERENCIAL"
+}
+```
+
+### Confirmar opção da IA
+
+```http
+POST /api/v1/reservas/confirmar-opcao
+```
+
+```json
+{
+  "grupoId": 1,
+  "salaId": 2,
+  "dataReserva": "2026-06-08",
+  "horarioInicio": "10:00",
+  "horarioFim": "12:00",
+  "posicoesAssentos": [1, 2, 3, 4]
+}
+```
+
+---
+
+## 📊 Dashboard
+
+O dashboard administrativo apresenta dados reais do sistema.
+
+Cards principais:
+
+* Reservas de hoje
+* Salas cadastradas
+* Reservas ativas
+* Usuários ativos
+
+Gráficos e blocos:
+
+* Distribuição das reservas por status
+* Salas mais usadas
+* Reservas de hoje
+* Salas cadastradas
+
+O dashboard consome os endpoints:
+
+```txt
+GET /api/v1/salas
+GET /api/v1/reservas/historico
+GET /api/v1/usuarios/listarUsuarios
+GET /api/v1/grupos
+```
+
+---
+
+## 🗓️ Calendário
+
+A tela de calendário mostra as reservas em formato mensal.
+
+Funcionalidades:
+
+* Navegação entre meses
+* Contador de reservas por dia
+* Lista lateral de reservas do dia selecionado
+* Detalhes da reserva
+* Cancelamento de reserva pelo calendário
+
+Fonte de dados:
+
+```http
+GET /api/v1/reservas/historico
+```
+
+---
+
+## 📈 Relatórios
+
+A tela de relatórios exibe métricas consolidadas das reservas.
+
+Métricas:
+
+* Total de reservas
+* Horas reservadas
+* Sala mais usada
+* Cancelamentos
+* Distribuição por sala
+* Ranking de uso
+* Pico de uso por horário
+
+Também há exportação de relatório em PDF.
+
+Tecnologias usadas para PDF:
+
+```txt
+html2canvas
+jsPDF
+```
+
+---
+
+## ⚙️ Configurações
+
+A tela de configurações permite:
+
+* Visualizar perfil
+* Alterar nome/e-mail
+* Escolher tipo de funcionário
+* Alterar tema
+* Sair da conta
+
+O tipo de funcionário atualizado impacta as recomendações da IA.
+
+Endpoint:
+
+```http
+PUT /api/v1/usuarios/me/tipo-funcionario
+```
+
+Body:
+
+```json
+{
+  "tipoFuncionario": "DESIGNER"
+}
+```
+
+---
+
+## 👤 Usuários
+
+### Endpoints de Usuários
+
+| Método   | Endpoint                               | Descrição                    | Acesso      |
+| -------- | -------------------------------------- | ---------------------------- | ----------- |
+| `GET`    | `/api/v1/usuarios`                     | Lista usuários               | ADMIN       |
+| `GET`    | `/api/v1/usuarios/listarUsuarios`      | Lista usuários               | ADMIN       |
+| `GET`    | `/api/v1/usuarios/meuPerfil`           | Perfil do usuário logado     | Autenticado |
+| `PUT`    | `/api/v1/usuarios`                     | Atualiza usuário autenticado | Autenticado |
+| `PUT`    | `/api/v1/usuarios/me/tipo-funcionario` | Atualiza tipo de funcionário | Autenticado |
+| `DELETE` | `/api/v1/usuarios/{id}`                | Remove usuário por ID        | ADMIN       |
+| `DELETE` | `/api/v1/usuarios/deletarConta`        | Remove a própria conta       | Autenticado |
 
 ---
 
 ## 🗄️ Banco de Dados
 
-O projeto utiliza **PostgreSQL** como banco de dados e **Flyway** para controle de migrations. As migrations ficam em `src/main/resources/db/migration/`.
+O projeto usa PostgreSQL com Flyway.
 
-### Tabela `usuarios`
-| Campo | Tipo | Restrição |
-|-------|------|-----------|
-| id | SERIAL | PRIMARY KEY |
-| email | TEXT | NOT NULL, UNIQUE |
-| senha | TEXT | NOT NULL |
-| username | TEXT | NOT NULL, UNIQUE |
-| role | TEXT | NOT NULL |
+### Principais tabelas
 
-### Tabela `salas`
-| Campo | Tipo | Restrição |
-|-------|------|-----------|
-| id | SERIAL | PRIMARY KEY |
-| nome | VARCHAR(130) | NOT NULL |
-| capacidade | INT | NOT NULL |
-| status | TEXT | NOT NULL |
-| local | TEXT | NOT NULL |
+```txt
+usuarios
+salas
+assentos
+reservas
+grupos
+grupo_usuarios
+convites_grupo
+refresh_tokens
+password_reset_tokens
+```
 
-### Tabela `assentos`
-| Campo | Tipo | Restrição |
-|-------|------|-----------|
-| id | SERIAL | PRIMARY KEY |
-| sala_id | INT | NOT NULL, FK → salas(id) |
-| posicao | INT | NOT NULL |
-| equipamento_assento | TEXT | — |
+### Usuários
 
-**Equipamentos de assento disponíveis:** `Computador`, `ApenasMonitor`, `Tela_4k`
+Campos principais:
 
-### Tabela `reservas`
-| Campo | Tipo | Restrição |
-|-------|------|-----------|
-| id | SERIAL | PRIMARY KEY |
-| horario_inicio | TIME | NOT NULL |
-| horario_fim | TIME | NOT NULL |
-| data_reserva | DATE | NOT NULL |
-| posicao | INT | NOT NULL |
-| sala_id | INT | NOT NULL, FK → salas(id) |
-| usuario_id | INT | FK → usuarios(id) |
-| status_reserva | TEXT | NOT NULL |
-| codigo_grupo | VARCHAR(100) | — |
+```txt
+id
+email
+senha
+username
+role
+tipo_funcionario
+deletado
+```
+
+### Salas
+
+Campos principais:
+
+```txt
+id
+nome
+capacidade
+status
+local
+cidade
+estado
+andar
+bloco
+raio_proximidade
+```
+
+### Assentos
+
+Campos principais:
+
+```txt
+id
+sala_id
+posicao
+equipamento_assento
+coordenada_x
+coordenada_y
+ativo
+```
+
+### Reservas
+
+Campos principais:
+
+```txt
+id
+horario_inicio
+horario_fim
+data_reserva
+posicao_assento
+sala_id
+usuario_id
+status_reserva
+codigo_grupo
+```
+
+### Grupos
+
+Campos principais:
+
+```txt
+id
+nome
+descricao
+lider_id
+```
+
+### Convites de grupo
+
+Campos principais:
+
+```txt
+id
+grupo_id
+email_convidado
+status
+criado_em
+respondido_em
+```
 
 ---
 
-## ⚙️ Configuração
+## 🔧 Configuração
 
-Configure as variáveis no `application.properties`:
+Exemplo de `application.properties`:
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/gerenciadordesala
 spring.datasource.username=postgres
 spring.datasource.password=${DB_PASSWORD}
+
+spring.jpa.hibernate.ddl-auto=validate
+
+spring.flyway.enabled=true
 
 api.security.token.secret=${JWT_SECRET:my-secret-key}
 
@@ -292,47 +628,89 @@ spring.mail.properties.mail.smtp.starttls.enable=true
 
 ---
 
-## 📖 Documentação (Swagger)
+## 📖 Swagger
 
-Com a aplicação rodando, acesse a documentação interativa em:
+Com a aplicação rodando, acesse:
 
-```
+```txt
 http://localhost:8080/swagger-ui.html
 ```
 
+ou:
+
+```txt
+http://localhost:8080/swagger-ui/index.html
+```
+
 ---
 
-## ▶️ Como Rodar
+## ▶️ Como Rodar o Backend
 
 ```bash
-# Clone o repositório
 git clone https://github.com/squad27-accenture/Gerenciador-de-salas.git
 
-# Entre na pasta
 cd Gerenciador-de-salas
 
-# Execute com Maven
 ./mvnw spring-boot:run
 ```
 
-A API estará disponível em `http://localhost:8080`.
+API disponível em:
+
+```txt
+http://localhost:8080
+```
+
+Base da API:
+
+```txt
+http://localhost:8080/api/v1
+```
 
 ---
 
-## 🔮 Funcionalidades Previstas
+## ▶️ Como Rodar o Frontend
 
-As funcionalidades abaixo fazem parte do escopo do projeto e serão implementadas nas próximas sprints:
+O frontend está em HTML, CSS e JavaScript puro.
 
-- [x] **Reserva de salas e assentos** — agendamento por dia e horário
-- [x] **Consulta por disponibilidade** — filtro por dia, horário e sala
-- [x] **Gestão de reservas** — cancelamento individual e em grupo
-- [x] **Recuperação de senha** — envio de código por e-mail
-- [ ] **Recomendação inteligente com IA** — sugestão da melhor sala com base nos critérios do usuário
-- [ ] **Extração automática de layout** — leitura da planta da sala para mapear assentos automaticamente
+Recomenda-se abrir com Live Server ou servidor local.
+
+Exemplo com VS Code:
+
+```txt
+1. Abrir a pasta do frontend
+2. Instalar extensão Live Server
+3. Abrir index.html com Live Server
+```
+
+O frontend consome:
+
+```txt
+http://localhost:8080/api/v1
+```
 
 ---
 
-👥 Time
+## 🧪 Fluxo de Teste Recomendado
+
+1. Criar usuário admin
+2. Fazer login
+3. Cadastrar salas
+4. Cadastrar/visualizar assentos
+5. Criar usuários comuns
+6. Criar grupo
+7. Convidar usuários por e-mail
+8. Aceitar convite
+9. Criar reserva individual
+10. Testar IA para reserva em grupo
+11. Confirmar opção sugerida
+12. Ver reservas no calendário
+13. Ver dados no dashboard
+14. Exportar relatório em PDF
+
+---
+
+## 👥 Time
+
 <table>
   <tr>
     <td align="center">
@@ -350,7 +728,7 @@ As funcionalidades abaixo fazem parte do escopo do projeto e serão implementada
     <td align="center">
       <a href="https://github.com/andersonsanto09">
         <img src="https://github.com/andersonsanto09.png" width="80px" style="border-radius: 50%"/><br/>
-        <sub><b>Anderson Ferreira </b></sub>
+        <sub><b>Anderson Ferreira</b></sub>
       </a>
     </td>
     <td align="center">
