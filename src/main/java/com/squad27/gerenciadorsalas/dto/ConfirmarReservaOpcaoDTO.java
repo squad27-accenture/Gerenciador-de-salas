@@ -9,6 +9,7 @@ public record ConfirmarReservaOpcaoDTO(
         LocalTime horarioFim,
         LocalDate dataReserva,
         Integer salaId,
+        Integer grupoId,
         List<Integer> posicoesAssentos
 ) {
 }

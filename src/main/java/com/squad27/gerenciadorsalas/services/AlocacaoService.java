@@ -49,7 +49,7 @@ public class AlocacaoService {
 
             List<Assento> melhorCombinacao = encontrarMelhorCombinacao(candidatosPorPessoa);
 
-            if (criterio == CriterioProximidade.OBRIGATORIA) {
+            if (criterio == CriterioProximidade.OBRIGATORIO) {
                 double distanciaMaxima = calcularDistanciaMaxima(melhorCombinacao);
                 if (distanciaMaxima > raioProximidade) {
                     throw new ResponseStatusException(HttpStatus.CONFLICT,

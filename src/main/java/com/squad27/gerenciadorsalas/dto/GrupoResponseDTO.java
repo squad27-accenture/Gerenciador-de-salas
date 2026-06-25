@@ -9,19 +9,22 @@ public record GrupoResponseDTO(
         String nome,
         String descricao,
         Boolean ativo,
-        List<UsuarioGrupoDTO> usuarios
+        UsuarioListagemDTO lider,
+        List<UsuarioListagemDTO> usuarios,
+        List<ConviteGrupoResponseDTO> convitesPendentes
 ) {
 
-    public GrupoResponseDTO(Grupo grupo) {
+    public GrupoResponseDTO(Grupo grupo, List<ConviteGrupoResponseDTO> convitesPendentes) {
         this(
                 grupo.getId(),
                 grupo.getNome(),
                 grupo.getDescricao(),
                 grupo.getAtivo(),
-                grupo.getUsuarios()
-                        .stream()
-                        .map(UsuarioGrupoDTO::new)
-                        .toList()
+                grupo.getLider() != null ? new UsuarioListagemDTO(grupo.getLider()) : null,
+                grupo.getUsuarios() != null
+                        ? grupo.getUsuarios().stream().map(UsuarioListagemDTO::new).toList()
+                        : List.of(),
+                convitesPendentes != null ? convitesPendentes : List.of()
         );
     }
 }

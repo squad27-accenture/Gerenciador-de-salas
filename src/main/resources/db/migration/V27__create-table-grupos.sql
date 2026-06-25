@@ -14,4 +14,3 @@ CREATE TABLE grupo_usuarios (
                                 FOREIGN KEY (grupo_id) REFERENCES grupos(id),
                                 FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
-);

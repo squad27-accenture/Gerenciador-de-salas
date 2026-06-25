@@ -4,6 +4,7 @@ package com.squad27.gerenciadorsalas.services;
 import com.squad27.gerenciadorsalas.domain.Usuario;
 import com.squad27.gerenciadorsalas.dto.UsuarioDTO;
 import com.squad27.gerenciadorsalas.dto.UsuarioResponseDTO;
+import com.squad27.gerenciadorsalas.enums.TipoFuncionario;
 import com.squad27.gerenciadorsalas.repositories.UsuarioRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -87,6 +88,25 @@ public class UsuarioService {
                 .build();
 
         usuarioRepository.saveAndFlush(usuarioAtualizado);
+    }
+
+    public Usuario atualizarTipoFuncionario(String emailUsuario, TipoFuncionario tipoFuncionario) {
+        if (tipoFuncionario == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "tipoFuncionario é obrigatório."
+            );
+        }
+
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Usuário não encontrado."
+                ));
+
+        usuario.setTipoFuncionario(tipoFuncionario);
+
+        return usuarioRepository.save(usuario);
     }
 
 

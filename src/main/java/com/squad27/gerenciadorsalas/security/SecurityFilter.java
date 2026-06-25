@@ -16,27 +16,36 @@ import java.io.IOException;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
-    @Autowired
-    TokenService tokenService;
 
     @Autowired
-    UsuarioRepository repository;
+    private TokenService tokenService;
 
-
+    @Autowired
+    private UsuarioRepository repository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        System.out.println(">>> PATH: " + request.getRequestURI());
-        var token = this.recoverToken(request);
+        String path = request.getRequestURI();
+        String token = recoverToken(request);
 
+        System.out.println(">>> PATH: " + path);
+        System.out.println(">>> Authorization existe? " + (request.getHeader("Authorization") != null));
+        System.out.println(">>> Token extraído? " + (token != null && !token.isBlank()));
 
-        if (token != null) {
-            var email = tokenService.validateToken(token);
+        if (token != null && !token.isBlank()) {
+            String email = tokenService.validateToken(token);
+
+            System.out.println(">>> Email extraído do token: " + email);
+
             if (email != null && !email.isBlank()) {
                 Usuario usuario = repository.findByEmail(email).orElse(null);
+
+                System.out.println(">>> Usuário encontrado? " + (usuario != null));
 
                 if (usuario != null) {
                     var authentication = new UsernamePasswordAuthenticationToken(
@@ -44,20 +53,30 @@ public class SecurityFilter extends OncePerRequestFilter {
                             null,
                             usuario.getAuthorities()
                     );
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                }
 
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    System.out.println(">>> AUTH SETADA: " + usuario.getEmail());
+                    System.out.println(">>> AUTHORITIES: " + usuario.getAuthorities());
+                }
             }
         }
 
         filterChain.doFilter(request, response);
     }
 
+    private String recoverToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
 
-    private String recoverToken(HttpServletRequest request){
-        var authHeader = request.getHeader("Authorization");
-        if (authHeader == null)return null;
-        return authHeader.replace("Bearer " , "");
+        if (authHeader == null || authHeader.isBlank()) {
+            return null;
+        }
+
+        if (!authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+
+        return authHeader.replace("Bearer ", "").trim();
     }
 
     @Override
@@ -69,7 +88,18 @@ public class SecurityFilter extends OncePerRequestFilter {
                 || path.startsWith("/api/docs")
                 || path.startsWith("/api/swagger-ui")
                 || path.equals("/swagger-ui.html")
-                || path.equals("/auth/login")
-                || path.equals("/auth/cadastro");
+
+                // Auth correto com /api/v1
+                || path.equals("/api/v1/auth/login")
+                || path.equals("/api/v1/auth/cadastro")
+                || path.equals("/api/v1/auth/recuperar-senha")
+                || path.equals("/api/v1/auth/redefinir-senha")
+                || path.equals("/api/v1/auth/refresh")
+                || path.equals("/api/v1/auth/logout")
+
+                // Health
+                || path.equals("/api/v1/health")
+                || path.equals("/actuator/health")
+                || path.equals("/actuator/info");
     }
 }

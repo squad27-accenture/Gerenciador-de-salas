@@ -86,12 +86,6 @@ public class SalaController {
         return ResponseEntity.ok("Sala atualizada com SUCESSO!");
     }
 
-    @GetMapping("{id}/assentos")
-    public ResponseEntity<List<AssentoReponseDTO>> listarAssentosDaSala(@PathVariable Integer id) {
-        List<AssentoReponseDTO> assentos = salaService.listarAssentosDaSala(id);
-        return ResponseEntity.ok(assentos);
-    }
-
     @GetMapping("ocupados")
     public ResponseEntity<List<Integer>> buscarAssentosOcupados(
             @RequestParam("salaId") Integer salaId,
